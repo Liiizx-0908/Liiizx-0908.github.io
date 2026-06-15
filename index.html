@@ -550,6 +550,52 @@
       border-radius: 12px;
       background: #fff8e9;
     }
+    .exam-part {
+      margin: 18px 0;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .exam-part h3 { margin: 0 0 8px; }
+    .exam-code {
+      overflow-x: auto;
+      margin: 12px 0;
+      padding: 15px;
+      border-radius: 11px;
+      color: #e9eefc;
+      background: #11192b;
+      font: 13px/1.6 Consolas, monospace;
+      white-space: pre;
+    }
+    .exam-answer {
+      min-height: 120px;
+      margin-top: 10px;
+    }
+    .exam-checks {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .exam-checks .option { margin: 0; }
+    .model-answer {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border: 1px solid #cbd8f5;
+      border-radius: 11px;
+      background: var(--blue-soft);
+    }
+    .model-answer summary {
+      color: var(--blue);
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .score-breakdown {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 12px;
+    }
 
     .empty {
       padding: 45px 25px;
@@ -1645,24 +1691,219 @@ Derived(int x) : Base(x), value(x) {}`
       }
     ];
 
-    const mockQuestions = [
-      ["普通对象不能直接访问哪类成员？", ["public", "private", "构造函数", "main"], 1, 4],
-      ["定义了 A(int) 后执行 A a; 的主要问题是？", ["缺少析构", "缺少无参构造", "缺少友元", "缺少模板"], 1, 4],
-      ["派生类对象构造顺序是？", ["派生类→基类", "基类→派生类", "只构造派生类", "随机"], 1, 4],
-      ["动态多态要求基类函数使用哪个关键字？", ["static", "friend", "virtual", "const"], 2, 5],
-      ["抽象类能否直接创建对象？", ["能", "不能", "只能创建数组", "只能在 main 外创建"], 1, 5],
-      ["二元运算符成员函数版通常有几个显式参数？", ["0", "1", "2", "3"], 1, 4],
-      ["输出运算符重载通常返回？", ["ostream&", "void", "bool", "int"], 0, 5],
-      ["类模板正确实例化形式是？", ["Box b", "Box<T> b", "Box<int> b", "template Box b"], 2, 4],
-      ["A b = a 通常调用？", ["赋值运算", "拷贝构造", "析构", "默认参数"], 1, 4],
-      ["通过基类指针删除派生对象，基类析构应当是？", ["private", "static", "virtual", "friend"], 2, 6]
+    const mockReadQuestions = [
+      {
+        title: "引用与指针联动",
+        code: `#include <iostream>
+using namespace std;
+int main() {
+  int x = 4;
+  int& r = x;
+  int* p = &x;
+  r += 3;
+  *p *= 2;
+  cout << x << " " << r << " " << *p << endl;
+}`,
+        answer: "14 14 14",
+        analysis: "r 是 x 的引用，p 保存 x 的地址。r += 3 后 x 为 7；*p *= 2 后 x 为 14，三个表达式访问的是同一个变量。",
+        checks: [["输出值与顺序完全正确", 3], ["能说明引用和指针都关联 x", 2], ["答案格式清晰完整", 1]]
+      },
+      {
+        title: "成员对象的构造与析构顺序",
+        code: `#include <iostream>
+using namespace std;
+class Engine {
+public:
+  Engine() { cout << "E+" << endl; }
+  ~Engine() { cout << "E-" << endl; }
+};
+class Car {
+  Engine e;
+public:
+  Car() { cout << "C+" << endl; }
+  ~Car() { cout << "C-" << endl; }
+};
+int main() { Car c; }`,
+        answer: `E+
+C+
+C-
+E-`,
+        analysis: "构造 Car 前先构造成员对象 Engine；析构顺序与构造相反，先执行 Car 析构函数体，再析构 Engine。",
+        checks: [["四行输出及先后顺序正确", 3], ["能解释成员对象先构造", 2], ["能解释析构顺序相反", 1]]
+      },
+      {
+        title: "拷贝构造与赋值运算",
+        code: `#include <iostream>
+using namespace std;
+class Box {
+  int value;
+public:
+  Box(int v) : value(v) { cout << "C" << value << endl; }
+  Box(const Box& b) : value(b.value) { cout << "P" << value << endl; }
+  Box& operator=(const Box& b) {
+    value = b.value;
+    cout << "A" << value << endl;
+    return *this;
+  }
+  ~Box() { cout << "D" << value << endl; }
+};
+int main() {
+  Box a(2);
+  Box b = a;
+  Box c(5);
+  c = b;
+}`,
+        answer: `C2
+P2
+C5
+A2
+D2
+D2
+D2`,
+        analysis: "Box b = a 是定义新对象，调用拷贝构造；c 已经存在，c = b 调用赋值运算符。局部对象按 c、b、a 的逆序析构。",
+        checks: [["七行输出完整且顺序正确", 3], ["区分拷贝构造与赋值", 2], ["说明对象逆序析构", 1]]
+      },
+      {
+        title: "继承中的构造与析构",
+        code: `#include <iostream>
+using namespace std;
+class Base {
+  int n;
+public:
+  Base(int x) : n(x) { cout << "B" << n << endl; }
+  ~Base() { cout << "b" << n << endl; }
+};
+class Derived : public Base {
+  int m;
+public:
+  Derived(int x) : Base(x), m(x) { cout << "D" << m << endl; }
+  ~Derived() { cout << "d" << m << endl; }
+};
+int main() { Derived obj(3); }`,
+        answer: `B3
+D3
+d3
+b3`,
+        analysis: "派生类对象先构造基类部分，再执行派生类构造；销毁时先执行派生类析构，再执行基类析构。",
+        checks: [["四行输出及大小写完全正确", 3], ["说明基类先构造", 2], ["说明派生类先析构", 1]]
+      },
+      {
+        title: "虚函数与动态多态",
+        code: `#include <iostream>
+using namespace std;
+class Base {
+public:
+  virtual int calc(int x) { return x + 1; }
+};
+class Derived : public Base {
+public:
+  int calc(int x) override { return x * 2; }
+};
+void run(Base& obj) { cout << obj.calc(3) << endl; }
+int main() {
+  Base a;
+  Derived b;
+  run(a);
+  run(b);
+}`,
+        answer: `4
+6`,
+        analysis: "run 的形参虽然是 Base&，但虚函数会根据实参的实际对象类型动态绑定。Base 对象调用 Base::calc，Derived 对象调用 Derived::calc。",
+        checks: [["两行输出正确", 3], ["指出通过 Base& 调用", 1], ["正确解释 virtual 动态绑定", 2]]
+      }
+    ];
+
+    const mockErrorQuestions = [
+      {
+        title: "默认参数的位置",
+        code: `int multiply(int a = 2, int b);
+int multiply(int a, int b) { return a * b; }`,
+        answer: "程序错误。声明中的 b 没有默认值，却位于已有默认值的 a 右侧。可改为 int multiply(int a, int b = 2);。",
+        checks: [["判断为错误", 1], ["指出函数声明位置", 1], ["说明默认参数必须从右向左连续并给出改法", 1]]
+      },
+      {
+        title: "类外访问私有成员",
+        code: `class Student {
+  int score;
+public:
+  Student(int s) : score(s) {}
+};
+int main() {
+  Student s(90);
+  cout << s.score << endl;
+}`,
+        answer: "程序错误。main 中的 s.score 直接访问了 private 成员。应提供 public 的 getScore()，通过成员函数读取。",
+        checks: [["判断为错误", 1], ["指出 s.score", 1], ["说明 private 访问限制并给出公有接口改法", 1]]
+      },
+      {
+        title: "多继承同名函数二义性",
+        code: `class Printer { public: void show() {} };
+class Scanner { public: void show() {} };
+class Device : public Printer, public Scanner {};
+int main() {
+  Device d;
+  d.show();
+}`,
+        answer: "程序错误。Device 同时继承两个 show，d.show() 无法确定调用哪一个。应写 d.Printer::show() 或 d.Scanner::show()。",
+        checks: [["判断为错误", 1], ["指出 d.show()", 1], ["说明二义性并使用作用域限定", 1]]
+      },
+      {
+        title: "虚函数返回类型不一致",
+        code: `class Base {
+public:
+  virtual double value(int x) { return x; }
+};
+class Derived : public Base {
+public:
+  int value(int x) { return x; }
+};`,
+        answer: "程序错误。派生类覆盖普通虚函数时返回类型应与基类一致（协变返回仅适用于相关类的指针或引用）。这里应改为 double value(int x) override。",
+        checks: [["判断为错误", 1], ["指出 Derived::value 的返回类型", 1], ["说明原型不匹配并给出正确声明", 1]]
+      },
+      {
+        title: "派生类未调用基类带参构造",
+        code: `class Base {
+public:
+  Base(int x) {}
+};
+class Derived : public Base {
+public:
+  Derived(int x) {}
+};`,
+        answer: "程序错误。Base 没有无参构造，Derived 构造基类部分时无法默认初始化。应写 Derived(int x) : Base(x) {}。",
+        checks: [["判断为错误", 1], ["指出 Derived 构造函数", 1], ["说明基类无默认构造并写出初始化列表", 1]]
+      }
     ];
 
     const mockCoding = [
-      { title: "单类设计", max: 10, checks: ["类与数据成员 2 分", "访问权限合理 2 分", "构造函数 2 分", "成员函数 2 分", "main 测试 2 分"] },
-      { title: "运算符重载", max: 15, checks: ["类定义与构造 3 分", "比较或算术运算符 5 分", "<< 或 >> 友元重载 5 分", "main 测试 2 分"] },
-      { title: "函数模板", max: 10, checks: ["template 声明 3 分", "T 正确用于返回值和参数 3 分", "函数逻辑 2 分", "两种类型测试 2 分"] },
-      { title: "继承与多类设计", max: 20, checks: ["基类设计 4 分", "继承关系 3 分", "虚函数/纯虚函数 4 分", "两个子类覆盖 5 分", "多态测试 4 分"] }
+      {
+        title: "单个类设计：BookOrder 图书采购",
+        max: 10,
+        prompt: "设计 BookOrder 类，私有成员保存书名、单价和数量；构造函数完成初始化；cost() 返回该书总价，display() 输出信息；静态成员 totalCost 累加所有订单金额。在 main 中创建两本书并输出总金额。",
+        checks: [["类、私有数据成员和访问权限正确", 2], ["构造函数正确初始化", 2], ["cost 与 display 功能正确", 2], ["static totalCost 定义、累加和访问正确", 2], ["main 创建两个对象并输出结果", 2]],
+        reference: ["先声明 string title、double price、int count 和 static double totalCost。", "构造函数中执行 totalCost += price * count。", "类外写 double BookOrder::totalCost = 0;，通过静态函数返回总额。"]
+      },
+      {
+        title: "运算符重载：Time 时间相加与输出",
+        max: 15,
+        prompt: "设计 Time 类保存小时和分钟。重载 +，使两个时间长度相加并自动把满 60 分钟进位；重载 << 输出为“X小时Y分钟”；在 main 中测试 Time(1, 45) + Time(2, 35)。",
+        checks: [["类、成员和构造函数正确", 3], ["operator+ 返回新对象且不破坏原对象", 4], ["分钟进位逻辑正确", 3], ["友元 operator<< 的参数与返回值正确", 3], ["main 测试并得到 4小时20分钟", 2]],
+        reference: ["operator+ 中先求 totalMinutes，再用 / 60 和 % 60 得到小时、分钟。", "输出运算符通常声明为 friend ostream& operator<<(ostream&, const Time&)。", "两个运算符都应返回结果，<< 最后 return out。"]
+      },
+      {
+        title: "函数模板：求两个值中的较大值",
+        max: 10,
+        prompt: "编写函数模板 larger(T a, T b)，返回两个值中较大的一个；分别用 int 和 double 各测试一次并输出结果。",
+        checks: [["template<typename T> 声明正确", 3], ["返回值和两个形参均使用 T", 2], ["比较与返回逻辑正确", 2], ["int 测试正确", 1], ["double 测试正确", 2]],
+        reference: ["函数头可写 template<typename T> T larger(T a, T b)。", "函数体可用 return a > b ? a : b;。", "main 中至少进行两种数据类型的隐式实例化。"]
+      },
+      {
+        title: "多类设计：配送费用多态计算",
+        max: 20,
+        prompt: "设计抽象基类 Delivery，保存配送距离 distance，并声明纯虚函数 cost()。派生 StandardDelivery（费用为 distance×1.2）和 ColdChainDelivery（费用为 distance×1.8+15）。通过基类指针或引用分别计算 20 公里配送费用，并输出结果。",
+        checks: [["抽象基类、受保护数据和构造函数正确", 4], ["纯虚函数 cost() 声明正确", 3], ["StandardDelivery 继承并正确覆盖", 3], ["ColdChainDelivery 继承并正确覆盖", 3], ["通过基类指针或引用实现动态多态", 4], ["main 输出 24 和 51，结构完整", 3]],
+        reference: ["Delivery 中写 virtual double cost() const = 0;，并建议使用虚析构函数。", "两个派生类构造函数都应通过初始化列表调用 Delivery(distance)。", "用 Delivery* 数组或接受 Delivery& 的函数统一调用 cost()。"]
+      }
     ];
 
     const exampleBank = [
@@ -1687,7 +1928,8 @@ Derived(int x) : Base(x), value(x) {}`
         lessons: ["class-access", "operators"],
         category: "运算符重载",
         difficulty: "基础",
-        points: 25,
+        points: 15,
+        examForm: "运算符重载编程题",
         title: "Pixel 输入输出运算符",
         prompt: "设计 Pixel 类描述红、绿、蓝三个分量；构造函数初始化，并重载 >> 和 << 完成对象输入输出。",
         focus: ["friend", "istream&", "ostream&", "链式输入输出"],
@@ -1703,7 +1945,8 @@ Derived(int x) : Base(x), value(x) {}`
         lessons: ["class-tools"],
         category: "静态成员",
         difficulty: "基础",
-        points: 25,
+        points: 10,
+        examForm: "单个类设计编程题",
         title: "Student 人数、总分与平均分",
         prompt: "Student 包含分数 score，静态成员 count 和 total，使用静态成员函数返回总人数、总分和平均分。",
         focus: ["static 数据", "类外定义", "构造累加", "静态函数"],
@@ -1751,9 +1994,10 @@ Derived(int x) : Base(x), value(x) {}`
         lessons: ["constructor", "class-tools"],
         category: "动态内存",
         difficulty: "进阶",
-        points: 25,
-        title: "一维动态数组类 onedim",
-        prompt: "实现动态数组的构造初始化、赋值、打印和析构清理，并正确处理深拷贝。",
+        points: 6,
+        examForm: "读程序写结果",
+        title: "读程序：一维动态数组的拷贝与析构",
+        prompt: "给出包含构造、拷贝构造、赋值和析构输出的 onedim 程序，按对象创建、复制、赋值和离开作用域的顺序写出全部运行结果。",
         focus: ["new[]/delete[]", "析构", "拷贝构造", "operator="],
         outline: [
           "构造函数按长度 new[]，析构函数 delete[]。",
@@ -1816,6 +2060,7 @@ Derived(int x) : Base(x), value(x) {}`
         category: "函数模板",
         difficulty: "基础",
         points: 10,
+        examForm: "函数模板编程题",
         title: "返回数组最大元素",
         prompt: "设计函数模板，接收数组和长度，返回数组中的最大元素。",
         focus: ["template<typename T>", "数组参数", "边界", "返回 T"],
@@ -1847,9 +2092,10 @@ Derived(int x) : Base(x), value(x) {}`
         lessons: ["templates", "constructor"],
         category: "类模板",
         difficulty: "综合",
-        points: 25,
-        title: "把数组类改写为类模板",
-        prompt: "将固定数据类型的一维数组类改成类模板，并在 main 中实例化两种不同类型。",
+        points: 3,
+        examForm: "指出错误并说明原因",
+        title: "改错：类模板定义与实例化",
+        prompt: "给出遗漏 template 声明、类外成员定义缺少模板前缀、实例化时未写类型参数的程序，指出一处关键错误并说明原因及修改方法。",
         focus: ["template class", "T* data", "构造析构", "实例化"],
         outline: [
           "类名前添加 template<typename T>。",
@@ -1863,7 +2109,8 @@ Derived(int x) : Base(x), value(x) {}`
         lessons: ["inheritance", "polymorphism", "multi-class"],
         category: "继承多态",
         difficulty: "综合",
-        points: 25,
+        points: 20,
+        examForm: "多类设计编程题",
         title: "赛车比赛模拟",
         prompt: "设计抽象赛车基类，包含最高速度、加速度和计算完成时间的虚函数；派生 FormulaCar 与 RallyCar，用动态联编测试。",
         focus: ["抽象基类", "纯虚函数", "派生类", "基类指针"],
@@ -2082,6 +2329,8 @@ Derived(int x) : Base(x), value(x) {}`
       wrong: [],
       code: {},
       mockAnswers: {},
+      mockText: {},
+      mockChecks: {},
       mockCoding: {}
     };
 
@@ -2101,6 +2350,8 @@ Derived(int x) : Base(x), value(x) {}`
         wrong: [],
         code: {},
         mockAnswers: {},
+        mockText: {},
+        mockChecks: {},
         mockCoding: {}
       };
     }
@@ -2122,6 +2373,8 @@ Derived(int x) : Base(x), value(x) {}`
           answers: stored.answers || {},
           code: stored.code || {},
           mockAnswers: stored.mockAnswers || {},
+          mockText: stored.mockText || {},
+          mockChecks: stored.mockChecks || {},
           mockCoding: stored.mockCoding || {}
         };
       } catch {
@@ -2767,8 +3020,9 @@ Derived(int x) : Base(x), value(x) {}`
       return `<article class="example-card" data-example-id="${example.id}">
         <div class="example-meta">
           <span class="tag">${example.category}</span>
+          ${example.examForm ? `<span class="tag">${example.examForm}</span>` : ""}
           <span class="tag">${example.difficulty}</span>
-          <span class="tag">${example.points} 分参考题</span>
+          <span class="tag">${example.points} 分</span>
         </div>
         <h3>${example.title}</h3>
         <p>${example.prompt}</p>
@@ -2843,6 +3097,7 @@ Derived(int x) : Base(x), value(x) {}`
             example.title,
             example.prompt,
             example.category,
+            example.examForm || "",
             example.difficulty,
             ...example.focus,
             ...example.outline
@@ -2889,6 +3144,31 @@ Derived(int x) : Base(x), value(x) {}`
       window.scrollTo({ top: 0 });
     }
 
+    function renderMockShortQuestion(item, index, type) {
+      const answerKey = `${type}-${index}`;
+      return `<article class="exam-part">
+        <h3>${index + 1}. ${item.title} <span class="tag">${type === "read" ? 6 : 3} 分</span></h3>
+        <pre class="exam-code">${escapeHtml(item.code)}</pre>
+        <label><strong>${type === "read" ? "请写出完整运行结果：" : "请判断并写出错误位置、原因和修改方法："}</strong></label>
+        <textarea class="exam-answer" data-mock-text="${answerKey}" placeholder="先独立作答，再展开参考答案……">${escapeHtml(state.mockText[answerKey] || "")}</textarea>
+        <details class="model-answer">
+          <summary>作答后展开参考答案与讲解</summary>
+          <p><strong>参考答案：</strong></p>
+          <pre class="exam-code">${escapeHtml(item.answer)}</pre>
+          ${item.analysis ? `<p><strong>讲解：</strong>${item.analysis}</p>` : ""}
+        </details>
+        <div class="exam-checks">
+          ${item.checks.map((check, checkIndex) => {
+            const key = `${type}-${index}-${checkIndex}`;
+            return `<label class="option">
+              <input type="checkbox" data-mock-check="${key}" ${state.mockChecks[key] ? "checked" : ""}>
+              <span>${check[0]}（${check[1]} 分）</span>
+            </label>`;
+          }).join("")}
+        </div>
+      </article>`;
+    }
+
     function showMock() {
       state.current = "mock";
       saveState();
@@ -2898,46 +3178,60 @@ Derived(int x) : Base(x), value(x) {}`
         <section class="panel">
           <div class="section-title">
             <div>
-              <span class="eyebrow" style="color:var(--blue)">建议安排在计划的最后一天</span>
+              <span class="eyebrow" style="color:var(--blue)">完全按照已确认的考试结构</span>
               <h2>${state.profile.target} 分目标模拟挑战</h2>
-              <p>客观题 45 分自动计分，四道编程题按得分点诚实自评，共 55 分。结果会按照你的个人目标判断。</p>
+              <p>读程序写结果 30 分 + 指出错误并说明原因 15 分 + 四道编程题 55 分，共 100 分。</p>
             </div>
           </div>
           <div class="mock-head">
             <div>
-              <strong>当前模拟成绩</strong>
+              <strong>当前模拟自评成绩</strong>
               <div style="color:#cbd5eb">目标线：${state.profile.target} / 100</div>
             </div>
             <div class="mock-score"><span id="mockScore">0</span> 分</div>
           </div>
-          <p class="exam-warning">本轮建议限时 ${getTargetProfile().mockMinutes} 分钟。先独立作答，再勾选你真正完成的编程得分点；目标越高，越要完成全部四道编程题。</p>
+          <div class="score-breakdown">
+            <span class="tag">读程序：5 题 × 6 分 = 30 分</span>
+            <span class="tag">改错：5 题 × 3 分 = 15 分</span>
+            <span class="tag">编程：10 + 15 + 10 + 20 = 55 分</span>
+          </div>
+          <p class="exam-warning">建议严格限时 ${getTargetProfile().mockMinutes} 分钟。先在答题框完整作答，再展开参考答案，只勾选真正写到的得分点。此处为自评，不等同于教师阅卷成绩。</p>
         </section>
 
         <section class="panel">
-          <h2>第一部分：读程序与改错核心判断（45 分）</h2>
-          ${mockQuestions.map((q, i) => `
-            <div class="question" data-mock="${i}">
-              <p class="question-title">${i + 1}. ${q[0]} <span class="tag">${q[3]} 分</span></p>
-              ${q[1].map((option, optionIndex) => `
-                <label class="option">
-                  <input type="radio" name="mock-${i}" value="${optionIndex}" ${state.mockAnswers[i] === optionIndex ? "checked" : ""}>
-                  <span>${String.fromCharCode(65 + optionIndex)}. ${option}</span>
-                </label>`).join("")}
-            </div>`).join("")}
+          <h2>第一部分：读程序写结果（30 分）</h2>
+          <p style="color:var(--muted)">共 5 道，每题 6 分。重点检查输出内容、先后顺序以及构造/析构和动态绑定过程。</p>
+          ${mockReadQuestions.map((item, index) => renderMockShortQuestion(item, index, "read")).join("")}
         </section>
 
         <section class="panel">
-          <h2>第二部分：编程题自评（55 分）</h2>
-          <p style="color:var(--muted)">必须在纸上或代码练习区真正写出后才能勾选。每个得分点按题目给出的分值平均计算。</p>
-          ${mockCoding.map((item, i) => `
-            <div class="question">
-              <p class="question-title">${i + 1}. ${item.title}（${item.max} 分）</p>
-              ${item.checks.map((check, j) => `
-                <label class="option">
-                  <input type="checkbox" data-coding="${i}-${j}" ${state.mockCoding[`${i}-${j}`] ? "checked" : ""}>
-                  <span>${check}</span>
-                </label>`).join("")}
-            </div>`).join("")}
+          <h2>第二部分：指出错误，说明原因（15 分）</h2>
+          <p style="color:var(--muted)">共 5 道，每题 3 分。每题必须写清：是否错误、错误位置、技术原因与修改方法。</p>
+          ${mockErrorQuestions.map((item, index) => renderMockShortQuestion(item, index, "error")).join("")}
+        </section>
+
+        <section class="panel">
+          <h2>第三部分：编程题（55 分）</h2>
+          <p style="color:var(--muted)">建议在纸上完整手写后再录入。评分点采用历年卷常见要求，但题目情境经过重新设计。</p>
+          ${mockCoding.map((item, index) => `
+            <article class="exam-part">
+              <h3>${index + 1}. ${item.title} <span class="tag">${item.max} 分</span></h3>
+              <p>${item.prompt}</p>
+              <textarea data-mock-text="coding-${index}" placeholder="在这里写完整 C++ 程序，或记录纸上答案的关键结构……">${escapeHtml(state.mockText[`coding-${index}`] || "")}</textarea>
+              <details class="model-answer">
+                <summary>作答后展开参考结构</summary>
+                <ol class="steps">${item.reference.map(step => `<li>${step}</li>`).join("")}</ol>
+              </details>
+              <div class="exam-checks">
+                ${item.checks.map((check, checkIndex) => {
+                  const key = `v2-${index}-${checkIndex}`;
+                  return `<label class="option">
+                    <input type="checkbox" data-coding="${key}" ${state.mockCoding[key] ? "checked" : ""}>
+                    <span>${check[0]}（${check[1]} 分）</span>
+                  </label>`;
+                }).join("")}
+              </div>
+            </article>`).join("")}
         </section>
 
         <section class="panel">
@@ -2949,13 +3243,17 @@ Derived(int x) : Base(x), value(x) {}`
         </section>
       `;
 
-      document.querySelectorAll("[data-mock]").forEach(box => {
-        box.querySelectorAll("input").forEach(input => {
-          input.addEventListener("change", () => {
-            state.mockAnswers[box.dataset.mock] = Number(input.value);
-            saveState();
-            updateMockScore();
-          });
+      document.querySelectorAll("[data-mock-text]").forEach(input => {
+        input.addEventListener("input", () => {
+          state.mockText[input.dataset.mockText] = input.value;
+          localStorage.setItem(stateStorageKey(), JSON.stringify(state));
+        });
+      });
+      document.querySelectorAll("[data-mock-check]").forEach(input => {
+        input.addEventListener("change", () => {
+          state.mockChecks[input.dataset.mockCheck] = input.checked;
+          saveState();
+          updateMockScore();
         });
       });
       document.querySelectorAll("[data-coding]").forEach(input => {
@@ -2975,19 +3273,26 @@ Derived(int x) : Base(x), value(x) {}`
       window.scrollTo({ top: 0 });
     }
 
-    function calculateMockScore() {
-      let objective = 0;
-      mockQuestions.forEach((q, i) => {
-        if (state.mockAnswers[i] === q[2]) objective += q[3];
-      });
-      let coding = 0;
-      mockCoding.forEach((item, i) => {
-        const each = item.max / item.checks.length;
-        item.checks.forEach((_, j) => {
-          if (state.mockCoding[`${i}-${j}`]) coding += each;
+    function sumMockChecks(items, type) {
+      let score = 0;
+      items.forEach((item, itemIndex) => {
+        item.checks.forEach((check, checkIndex) => {
+          if (state.mockChecks[`${type}-${itemIndex}-${checkIndex}`]) score += check[1];
         });
       });
-      return { objective, coding: Math.round(coding), total: Math.round(objective + coding) };
+      return score;
+    }
+
+    function calculateMockScore() {
+      const read = sumMockChecks(mockReadQuestions, "read");
+      const error = sumMockChecks(mockErrorQuestions, "error");
+      let coding = 0;
+      mockCoding.forEach((item, itemIndex) => {
+        item.checks.forEach((check, checkIndex) => {
+          if (state.mockCoding[`v2-${itemIndex}-${checkIndex}`]) coding += check[1];
+        });
+      });
+      return { read, error, coding, total: read + error + coding };
     }
 
     function updateMockScore() {
@@ -3002,9 +3307,9 @@ Derived(int x) : Base(x), value(x) {}`
       const reached = score.total >= state.profile.target;
       const message = reached
         ? `已经达到 ${state.profile.target} 分目标。接下来优先清空错题，并再手写一次最薄弱的编程题。`
-        : `距离目标还差 ${state.profile.target - score.total} 分。先补客观题规则，再练推荐计划中尚未完成的编程模块。`;
+        : `距离目标还差 ${state.profile.target - score.total} 分。先补读程序和改错中的规则漏洞，再手写尚未拿满得分点的编程题。`;
       result.innerHTML = `<strong>${reached ? "达到目标" : "需要补强"}：${score.total} / 100</strong>
-        <p>客观题：${score.objective} / 45；编程题自评：${score.coding} / 55。</p>
+        <p>读程序：${score.read} / 30；改错：${score.error} / 15；编程题：${score.coding} / 55。</p>
         <p style="margin-bottom:0">${message}</p>`;
       result.classList.add("show");
     }
@@ -3060,6 +3365,8 @@ Derived(int x) : Base(x), value(x) {}`
           wrong: [],
           code: {},
           mockAnswers: {},
+          mockText: {},
+          mockChecks: {},
           mockCoding: {}
         };
         saveState();
