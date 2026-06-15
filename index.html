@@ -1,0 +1,3074 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C++ 面向对象个性化复习助手</title>
+  <style>
+    :root {
+      --ink: #17213a;
+      --muted: #64708a;
+      --paper: #f5f3ed;
+      --card: #fffdf8;
+      --line: #ded9cd;
+      --blue: #315dca;
+      --blue-soft: #eaf0ff;
+      --green: #167a5a;
+      --green-soft: #e5f5ef;
+      --orange: #d56d2f;
+      --orange-soft: #fff0e5;
+      --red: #b64040;
+      --shadow: 0 16px 45px rgba(33, 42, 66, .10);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(49, 93, 202, .10), transparent 32rem),
+        var(--paper);
+      font-family: "Microsoft YaHei", "Noto Sans SC", Arial, sans-serif;
+      line-height: 1.65;
+    }
+    body.auth-pending { overflow: hidden; }
+
+    button, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 310px 1fr; }
+
+    .reference-banner {
+      position: sticky;
+      z-index: 30;
+      top: 0;
+      padding: 11px 22px;
+      border-bottom: 1px solid #8f2d2d;
+      color: #fff;
+      background: #9e3030;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+    .reference-banner strong { color: #ffe29d; }
+
+    .login-overlay {
+      position: fixed;
+      z-index: 100;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(12, 19, 35, .92);
+      backdrop-filter: blur(12px);
+    }
+    .login-overlay.hidden { display: none; }
+    .login-card {
+      width: min(560px, 100%);
+      padding: clamp(24px, 5vw, 42px);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 24px;
+      color: #fff;
+      background: #17213a;
+      box-shadow: 0 25px 80px rgba(0,0,0,.35);
+    }
+    .login-card h1 { margin: 8px 0 10px; font-size: clamp(29px, 5vw, 43px); line-height: 1.18; }
+    .login-card > p { color: #c9d3ea; }
+    .login-card label.field-label { display: block; margin: 18px 0 7px; font-weight: 800; }
+    .login-card input[type="text"] {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid #7181a8;
+      border-radius: 11px;
+      color: #17213a;
+      background: #fff;
+      outline: none;
+      font-size: 17px;
+    }
+    .login-card input[type="text"]:focus { box-shadow: 0 0 0 4px rgba(111,160,255,.20); }
+    .login-consent {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin: 16px 0;
+      padding: 13px;
+      border-radius: 11px;
+      color: #dce5f8;
+      background: rgba(255,255,255,.07);
+      font-size: 13px;
+    }
+    .login-mode {
+      margin-top: 14px;
+      padding: 11px 13px;
+      border-radius: 10px;
+      color: #ffd78d;
+      background: rgba(255,207,121,.10);
+      font-size: 13px;
+    }
+    .login-error { min-height: 24px; margin-top: 10px; color: #ffabab; font-weight: 700; }
+    .student-badge {
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: #fff;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 26px 20px;
+      color: #fff;
+      background: #17213a;
+    }
+
+    .brand small {
+      display: block;
+      color: #aebcdd;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .brand h1 {
+      margin: 5px 0 8px;
+      font-size: 27px;
+      line-height: 1.25;
+    }
+
+    .brand p { margin: 0; color: #c9d3ea; font-size: 14px; }
+    .score-card {
+      margin: 22px 0;
+      padding: 17px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      background: rgba(255,255,255,.07);
+    }
+
+    .score-row { display: flex; justify-content: space-between; align-items: baseline; }
+    .score-number { font-size: 32px; font-weight: 800; color: #ffcf79; }
+    .progress {
+      height: 8px;
+      overflow: hidden;
+      margin-top: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+    }
+    .progress > span {
+      display: block;
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #6fa0ff, #ffcf79);
+      transition: width .35s ease;
+    }
+
+    .nav-day {
+      margin: 24px 7px 8px;
+      color: #91a4cf;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .14em;
+    }
+
+    .nav-item {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 9px;
+      align-items: center;
+      margin: 5px 0;
+      padding: 11px 12px;
+      border: 0;
+      border-radius: 12px;
+      color: #dbe3f5;
+      background: transparent;
+      text-align: left;
+    }
+    .nav-item:hover, .nav-item.active { background: rgba(255,255,255,.10); color: #fff; }
+    .nav-item.done .nav-index { background: var(--green); color: #fff; }
+    .nav-item.skipped { opacity: .62; }
+    .nav-item.skipped .nav-index { background: #59647d; color: #fff; }
+    .nav-index {
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(255,255,255,.10);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .nav-time { color: #91a4cf; font-size: 11px; }
+
+    .sidebar-actions { display: grid; gap: 9px; margin-top: 22px; }
+    .sidebar-actions button {
+      padding: 11px 13px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 11px;
+      color: #e4eafd;
+      background: rgba(255,255,255,.07);
+    }
+
+    main { min-width: 0; padding: 34px clamp(20px, 5vw, 70px) 70px; }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+      max-width: 1120px;
+      margin: 0 auto 24px;
+    }
+    .topbar h2 { margin: 0; font-size: 18px; }
+    .countdown {
+      padding: 9px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,.65);
+      font-size: 13px;
+    }
+
+    .content { max-width: 1120px; margin: 0 auto; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(26px, 5vw, 54px);
+      border-radius: 26px;
+      color: #fff;
+      background: linear-gradient(125deg, #244da9, #17213a 70%);
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      content: "</>";
+      position: absolute;
+      right: 6%;
+      bottom: -34px;
+      color: rgba(255,255,255,.07);
+      font-family: Consolas, monospace;
+      font-size: clamp(110px, 18vw, 230px);
+      font-weight: 900;
+    }
+    .eyebrow {
+      color: #ffcf79;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .13em;
+    }
+    .hero h2 {
+      max-width: 760px;
+      margin: 9px 0 13px;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1.12;
+    }
+    .hero p { max-width: 760px; margin: 0; color: #d9e2f7; font-size: 17px; }
+    .hero-actions { position: relative; z-index: 1; display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+
+    .btn {
+      padding: 11px 18px;
+      border: 0;
+      border-radius: 11px;
+      font-weight: 800;
+    }
+    .btn-primary { color: #17213a; background: #ffcf79; }
+    .btn-blue { color: #fff; background: var(--blue); }
+    .btn-soft { color: var(--blue); background: var(--blue-soft); }
+    .btn-outline { color: var(--ink); border: 1px solid var(--line); background: #fff; }
+    .btn-danger { color: var(--red); border: 1px solid #efc6c6; background: #fff7f7; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin: 18px 0 30px;
+    }
+    .stat {
+      padding: 19px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.70);
+    }
+    .stat strong { display: block; font-size: 25px; }
+    .stat span { color: var(--muted); font-size: 13px; }
+
+    .panel {
+      margin: 20px 0;
+      padding: clamp(21px, 4vw, 34px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: 0 8px 28px rgba(33, 42, 66, .06);
+    }
+    .panel h2, .panel h3 { margin-top: 0; }
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .section-title h2 { margin: 4px 0 3px; font-size: clamp(27px, 4vw, 40px); line-height: 1.2; }
+    .section-title p { margin: 0; color: var(--muted); }
+    .tag {
+      flex: none;
+      padding: 6px 11px;
+      border-radius: 999px;
+      color: var(--blue);
+      background: var(--blue-soft);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .goal-grid, .concept-grid, .rubric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .goal, .concept, .rubric-item {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #fff;
+    }
+    .goal strong, .concept strong { display: block; margin-bottom: 5px; }
+    .goal span, .concept span { color: var(--muted); font-size: 14px; }
+    .concept b { color: var(--blue); }
+    .concept { transition: opacity .2s ease, background .2s ease; }
+    .concept.known { background: #f0f1f3; opacity: .72; }
+    .concept.known .concept-detail { display: none; }
+    .known-note { display: none; color: var(--green); font-size: 14px; font-weight: 700; }
+    .concept.known .known-note { display: block; }
+    .concept-check {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--line);
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .setup-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .setup-field {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #fff;
+    }
+    .setup-field label { display: block; margin-bottom: 7px; font-weight: 800; }
+    .setup-field small { display: block; margin-top: 7px; color: var(--muted); }
+    .setup-field select, .setup-field input {
+      width: 100%;
+      padding: 10px 11px;
+      border: 1px solid #cfd4df;
+      border-radius: 9px;
+      color: var(--ink);
+      background: #fff;
+    }
+    .plan-day {
+      margin: 14px 0;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .plan-day-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+    .plan-task {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 0;
+      border-top: 1px dashed #e5e1d8;
+    }
+    .plan-task:first-of-type { border-top: 0; }
+    .plan-task span { color: var(--muted); white-space: nowrap; }
+    .plan-alert {
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-radius: 11px;
+      color: #8f461c;
+      background: var(--orange-soft);
+    }
+    .profile-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    .method {
+      margin: 18px 0;
+      padding: 16px 18px;
+      border-left: 5px solid var(--orange);
+      border-radius: 0 12px 12px 0;
+      background: var(--orange-soft);
+    }
+    .method strong { color: #9f4b1d; }
+    .method p { margin: 4px 0 0; }
+
+    pre {
+      overflow-x: auto;
+      margin: 14px 0;
+      padding: 19px;
+      border-radius: 13px;
+      color: #e8eefb;
+      background: #11192b;
+      font: 14px/1.65 Consolas, "Courier New", monospace;
+      tab-size: 4;
+      white-space: pre;
+    }
+    code { font-family: Consolas, "Courier New", monospace; }
+    :not(pre) > code {
+      padding: 2px 6px;
+      border-radius: 5px;
+      color: #274ba1;
+      background: var(--blue-soft);
+    }
+
+    .steps { counter-reset: lesson-step; padding: 0; list-style: none; }
+    .steps li {
+      position: relative;
+      min-height: 34px;
+      margin: 11px 0;
+      padding-left: 44px;
+    }
+    .steps li::before {
+      counter-increment: lesson-step;
+      content: counter(lesson-step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      color: #fff;
+      background: var(--blue);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .question {
+      margin: 16px 0;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .question.correct { border-color: #7fc6ad; background: var(--green-soft); }
+    .question.wrong { border-color: #e2a2a2; background: #fff4f4; }
+    .question-title { margin: 0 0 12px; font-weight: 800; }
+    .option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin: 7px 0;
+      padding: 10px 12px;
+      border: 1px solid #e5e1d8;
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .option:hover { border-color: #aebfea; }
+    .feedback {
+      display: none;
+      margin-top: 11px;
+      padding-top: 11px;
+      border-top: 1px dashed rgba(23,33,58,.20);
+      font-size: 14px;
+    }
+    .question.answered .feedback { display: block; }
+
+    textarea {
+      width: 100%;
+      min-height: 230px;
+      resize: vertical;
+      padding: 16px;
+      border: 1px solid #cfd4df;
+      border-radius: 12px;
+      outline: none;
+      color: #e9eefc;
+      background: #11192b;
+      font: 14px/1.65 Consolas, monospace;
+    }
+    textarea:focus { border-color: #6f8fda; box-shadow: 0 0 0 3px rgba(49,93,202,.12); }
+    .editor-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 11px; }
+    .solution { display: none; margin-top: 16px; }
+    .solution.show { display: block; }
+    .code-result {
+      display: none;
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 11px;
+      background: var(--blue-soft);
+    }
+    .code-result.show { display: block; }
+
+    .lesson-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+
+    .mock-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px;
+      border-radius: 14px;
+      color: #fff;
+      background: #17213a;
+    }
+    .mock-score { font-size: 32px; font-weight: 900; color: #ffcf79; }
+    .exam-warning {
+      padding: 14px;
+      border: 1px solid #f0d599;
+      border-radius: 12px;
+      background: #fff8e9;
+    }
+
+    .empty {
+      padding: 45px 25px;
+      border: 1px dashed #b8b3a9;
+      border-radius: 15px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .hidden { display: none !important; }
+    .mobile-toggle { display: none; }
+
+    .bank-controls {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr;
+      gap: 11px;
+      margin: 17px 0;
+    }
+    .bank-controls input, .bank-controls select {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #cfd4df;
+      border-radius: 10px;
+      color: var(--ink);
+      background: #fff;
+    }
+    .example-bank-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+    .example-card {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+    }
+    .example-card h3 { margin: 8px 0; }
+    .example-card p { color: var(--muted); }
+    .example-meta { display: flex; flex-wrap: wrap; gap: 7px; }
+    .example-card details {
+      margin-top: 13px;
+      padding-top: 11px;
+      border-top: 1px dashed var(--line);
+    }
+    .example-card summary { color: var(--blue); font-weight: 800; cursor: pointer; }
+    .example-card ul { padding-left: 20px; }
+
+    @media (max-width: 900px) {
+      .app { display: block; }
+      .sidebar {
+        position: fixed;
+        z-index: 20;
+        left: 0;
+        width: min(86vw, 330px);
+        transform: translateX(-105%);
+        transition: transform .25s ease;
+        box-shadow: var(--shadow);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .mobile-toggle {
+        display: inline-grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        background: #fff;
+      }
+      main { padding-top: 18px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .example-bank-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      main { padding-left: 14px; padding-right: 14px; }
+      .topbar { align-items: flex-start; }
+      .countdown { display: none; }
+      .stats, .goal-grid, .concept-grid, .rubric-grid, .setup-grid, .bank-controls { grid-template-columns: 1fr; }
+      .hero-actions, .lesson-actions { flex-direction: column; }
+      .btn { width: 100%; }
+      .section-title { display: block; }
+      .tag { display: inline-block; margin-top: 10px; }
+    }
+  </style>
+</head>
+<body class="auth-pending">
+  <div class="login-overlay" id="loginOverlay">
+    <form class="login-card" id="loginForm">
+      <div class="eyebrow">首次使用需要激活</div>
+      <h1>使用学号登录复习助手</h1>
+      <p>学号首次登录后将绑定当前浏览器，学习进度仅保存在这台设备的浏览器中，不会上传到服务器。</p>
+      <label class="field-label" for="studentIdInput">学号</label>
+      <input id="studentIdInput" type="text" inputmode="numeric" autocomplete="username" maxlength="20" placeholder="请输入 4–20 位数字学号">
+      <label class="login-consent">
+        <input id="consentInput" type="checkbox">
+        <span>我已知晓：本网站内容依据所提供资料整理，仅供学习参考，可能存在疏漏；应以任课教师、教材和正式考试通知为准，网站不保证任何考试分数或最终成绩。</span>
+      </label>
+      <button class="btn btn-primary" type="submit" style="width:100%">登录并绑定当前设备</button>
+      <div class="login-error" id="loginError"></div>
+      <div class="login-mode" id="loginMode">正在检查登录服务模式……</div>
+    </form>
+  </div>
+
+  <div class="reference-banner">
+    <strong>重要提示：</strong>本站内容仅供复习参考，不代表正式考试范围，不构成任何成绩承诺；请以教师讲授、教材及学校通知为准。
+  </div>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <small>Object-Oriented C++</small>
+        <h1>个性化复习助手</h1>
+        <p>根据课程 PPT、复习提纲与补充题目资料整理</p>
+      </div>
+
+      <div class="score-card">
+        <div class="score-row">
+          <span>当前掌握度</span>
+          <strong class="score-number" id="masteryNumber">0%</strong>
+        </div>
+        <div class="progress"><span id="masteryBar"></span></div>
+        <div class="score-row" style="margin-top:10px;color:#b9c5df;font-size:12px">
+          <span id="completedText">0 / 9 课</span>
+          <span id="wrongText">0 道错题</span>
+        </div>
+      </div>
+
+      <nav id="lessonNav"></nav>
+
+      <div class="sidebar-actions">
+        <button type="button" id="settingsBtn">调整复习目标与时间</button>
+        <button type="button" id="bankBtn">扩展例题库</button>
+        <button type="button" id="wrongBookBtn">错题补练</button>
+        <button type="button" id="mockBtn">目标分模拟挑战</button>
+        <button type="button" id="resetBtn">清空学习进度</button>
+      </div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div style="display:flex;gap:12px;align-items:center">
+          <button class="mobile-toggle" id="menuBtn" aria-label="打开课程目录">☰</button>
+          <div>
+            <h2 id="topTitle">从基础开始，一步一步来</h2>
+            <span style="color:var(--muted);font-size:13px">每学完一节就做题，不靠“看懂了”的错觉</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="student-badge" id="studentBadge">学号未登录</div>
+          <div class="countdown" id="countdown">距离考试计算中</div>
+        </div>
+      </div>
+
+      <div class="content" id="content"></div>
+    </main>
+  </div>
+
+  <script>
+    const lessons = [
+      {
+        id: "class-access",
+        day: "第一天 · 基础得分区",
+        title: "类、对象与访问权限",
+        time: 45,
+        weight: "单类设计 10 分基础",
+        intro: "先解决最容易丢分的问题：什么属于类、对象能访问谁、成员函数能访问谁。",
+        goals: [
+          ["认识类和对象", "类是模板，对象是按照模板创建的具体实例。"],
+          ["掌握三种权限", "能判断 public、protected、private 的访问是否合法。"],
+          ["会设计简单类", "能写数据成员、构造函数、普通成员函数和测试代码。"],
+          ["会写改错理由", "使用“错误位置 + 原因 + 修改方式”的规范表达。"]
+        ],
+        concepts: [
+          ["类与对象", "类描述<b>属性和行为</b>；对象是类的一个实例。"],
+          ["public", "类内、派生类、类外对象都可按规则访问。"],
+          ["protected", "类内和派生类可访问，普通对象不能直接访问。"],
+          ["private", "只有本类成员和友元可以直接访问，类外对象不行。"]
+        ],
+        method: ["判断访问权限的三步法", "先看“谁在访问”，再看成员的权限，最后看是否存在继承关系。不要只盯着 public/private 单词猜答案。"],
+        exampleTitle: "例题：为什么这段代码编译错误？",
+        example: `class Task {
+protected:
+    void setX(int value) { x = value; }
+private:
+    int x;
+};
+
+int main() {
+    Task task;
+    task.setX(4);   // 错误
+}`,
+        steps: [
+          "`task` 是类外创建的普通对象。",
+          "`setX` 是 protected 成员，不能通过普通对象直接调用。",
+          "规范答案：错误在 `task.setX(4)`；因为类外对象不能访问 protected 成员；可将 `setX` 改为 public，或提供 public 接口间接调用。"
+        ],
+        quiz: [
+          {
+            id: "q1",
+            text: "class 中没有写访问说明符时，成员默认属于哪种权限？",
+            options: ["public", "protected", "private", "由编译器随机决定"],
+            answer: 2,
+            explain: "C++ 的 class 默认权限是 private；struct 默认权限是 public。"
+          },
+          {
+            id: "q2",
+            text: "类外创建对象 obj，以下哪种成员可以直接写 obj.member 访问？",
+            options: ["public 成员", "protected 成员", "private 成员", "三者都可以"],
+            answer: 0,
+            explain: "普通对象只能从类外直接访问 public 成员。"
+          },
+          {
+            id: "q3",
+            text: "类自己的成员函数能直接访问本类的 private 数据成员吗？",
+            options: ["能", "不能", "只有构造函数能", "只有析构函数能"],
+            answer: 0,
+            explain: "private 限制的是类外访问，本类成员函数可以直接访问。"
+          }
+        ],
+        practice: {
+          title: "动手题：设计 Student 类",
+          prompt: "写一个 Student 类：私有成员 name 和 score；构造函数完成初始化；public 成员函数 print() 输出信息；在 main 中创建对象并调用。",
+          starter: `#include <iostream>
+#include <string>
+using namespace std;
+
+// 在这里完成 Student 类
+
+int main() {
+    // 创建并测试对象
+    return 0;
+}`,
+          keywords: ["class Student", "private:", "public:", "Student(", "print(", "Student "],
+          solution: `#include <iostream>
+#include <string>
+using namespace std;
+
+class Student {
+private:
+    string name;
+    double score;
+public:
+    Student(string n, double s) : name(n), score(s) {}
+
+    void print() const {
+        cout << name << " " << score << endl;
+    }
+};
+
+int main() {
+    Student student("Li", 85);
+    student.print();
+    return 0;
+}`
+        }
+      },
+      {
+        id: "constructor",
+        day: "第一天 · 基础得分区",
+        title: "构造、析构与初始化列表",
+        time: 55,
+        weight: "读程序与改错高频",
+        intro: "构造和析构几乎一定会进入读程序或改错题，也是继承题的前置知识。",
+        goals: [
+          ["识别构造函数", "函数名与类名相同，不写返回类型。"],
+          ["识别析构函数", "名字为 ~类名，无参数且不能重载。"],
+          ["理解默认构造", "知道定义带参构造后可能不再自动生成无参构造。"],
+          ["跟踪调用顺序", "能够在纸上写出对象创建和销毁顺序。"]
+        ],
+        concepts: [
+          ["构造函数", "对象出生时自动调用，可以重载，不能写返回类型。"],
+          ["析构函数", "对象销毁时自动调用，一个类只能有一个。"],
+          ["初始化列表", "在进入构造函数体前初始化成员，格式为 <b>: member(value)</b>。"],
+          ["默认构造", "能够不传参数调用的构造函数，包括参数带默认值的构造函数。"]
+        ],
+        method: ["读调用顺序的方法", "看到对象定义就写下“构造”；看到作用域结束或 delete 就写“析构”。多个局部对象通常按照创建顺序构造，反向析构。"],
+        exampleTitle: "例题：数组为什么创建失败？",
+        example: `class A {
+public:
+    A(int value) { x = value; }
+private:
+    int x;
+};
+
+int main() {
+    A arr[10];     // 错误
+}`,
+        steps: [
+          "`A arr[10]` 要创建 10 个 A 对象，但代码没有给每个对象传参数。",
+          "类只定义了 `A(int)`，系统不会再自动提供 `A()`。",
+          "可以补充 `A() : x(0) {}`，或者写出每个数组元素的初始化值。"
+        ],
+        quiz: [
+          {
+            id: "q4",
+            text: "下面哪个构造函数声明是正确的？",
+            options: ["void Book()", "int Book()", "Book()", "~Book(int x)"],
+            answer: 2,
+            explain: "构造函数不写任何返回类型，名字必须与类名相同。"
+          },
+          {
+            id: "q5",
+            text: "局部对象 a、b 依次创建，离开作用域时通常如何析构？",
+            options: ["a 再 b", "b 再 a", "只析构 a", "顺序不确定"],
+            answer: 1,
+            explain: "局部对象按创建顺序构造，通常按相反顺序析构。"
+          },
+          {
+            id: "q6",
+            text: "类只定义了 A(int)，执行 A x; 会发生什么？",
+            options: ["自动令参数为 0", "调用拷贝构造", "因没有可用无参构造而出错", "调用析构函数"],
+            answer: 2,
+            explain: "自定义带参构造后，编译器不会自动补上默认无参构造。"
+          }
+        ],
+        practice: {
+          title: "读程序：写出完整输出顺序",
+          prompt: "补全类 B 和 D，使创建 D 对象时先输出 B()、再输出 D()；对象销毁时输出 ~D()、再输出 ~B()。",
+          starter: `#include <iostream>
+using namespace std;
+
+class B {
+    // 补充构造和析构
+};
+
+class D : public B {
+    // 补充构造和析构
+};
+
+int main() {
+    D object;
+    return 0;
+}`,
+          keywords: ["B()", "~B()", "D()", "~D()", "cout"],
+          solution: `#include <iostream>
+using namespace std;
+
+class B {
+public:
+    B()  { cout << "B()" << endl; }
+    ~B() { cout << "~B()" << endl; }
+};
+
+class D : public B {
+public:
+    D()  { cout << "D()" << endl; }
+    ~D() { cout << "~D()" << endl; }
+};
+
+int main() {
+    D object;
+    return 0;
+}
+
+// 输出：
+// B()
+// D()
+// ~D()
+// ~B()`
+        }
+      },
+      {
+        id: "class-tools",
+        day: "第一天 · 基础得分区",
+        title: "static、this、拷贝与赋值",
+        time: 45,
+        weight: "细节题保分",
+        intro: "这一节专攻容易混淆的小概念。掌握后，读程序和改错题会稳定很多。",
+        goals: [
+          ["掌握 static", "知道静态数据属于整个类，由所有对象共享。"],
+          ["理解 this", "知道 this 指向当前正在调用成员函数的对象。"],
+          ["区分两种复制", "新对象创建时是拷贝构造，已有对象之间是赋值。"],
+          ["掌握类外初始化", "会写 int ClassName::member = 0;。"]
+        ],
+        concepts: [
+          ["静态数据成员", "不属于某个单独对象，所有对象共享同一份数据。"],
+          ["静态成员函数", "没有普通对象的 this 指针，通常只能直接访问静态成员。"],
+          ["拷贝构造", "用已有对象<b>创建新对象</b>，典型形式为 A(const A& other)。"],
+          ["赋值运算", "两个对象都已存在，再执行 a = b。"]
+        ],
+        method: ["一眼区分拷贝和赋值", "问自己：左边对象在这一行之前存在吗？不存在，是拷贝构造；已经存在，是赋值。"],
+        exampleTitle: "例题：下面两行分别调用什么？",
+        example: `Book a("C++");
+Book b = a;   // 创建 b
+
+Book c("Java");
+c = a;        // c 已经存在`,
+        steps: [
+          "`Book b = a` 在创建新对象 b，因此调用拷贝构造函数。",
+          "`c = a` 执行前 c 已经存在，因此调用赋值运算符。",
+          "考试表述：拷贝构造负责初始化，赋值运算负责修改已有对象。"
+        ],
+        quiz: [
+          {
+            id: "q7",
+            text: "静态数据成员通常应如何初始化？",
+            options: ["每个构造函数中初始化", "类外使用 类名::成员名 初始化", "main 结束后初始化", "不允许初始化"],
+            answer: 1,
+            explain: "传统考试语境下，静态数据成员在类内声明，在类外定义并初始化。"
+          },
+          {
+            id: "q8",
+            text: "this 指针指向什么？",
+            options: ["基类对象", "当前调用成员函数的对象", "第一个创建的对象", "静态成员"],
+            answer: 1,
+            explain: "this 是当前对象的地址，静态成员函数没有 this。"
+          },
+          {
+            id: "q9",
+            text: "A b = a; 中 b 原本不存在，这通常属于什么？",
+            options: ["析构", "普通赋值", "拷贝构造", "函数模板"],
+            answer: 2,
+            explain: "创建新对象并用同类对象初始化，是拷贝构造。"
+          }
+        ],
+        practice: {
+          title: "动手题：统计对象数量",
+          prompt: "设计 Counter 类，用 static int total 记录当前对象数。构造时加 1，析构时减 1，并提供 static 函数 getTotal()。",
+          starter: `#include <iostream>
+using namespace std;
+
+class Counter {
+    // 完成类定义
+};
+
+// 别忘了静态成员的类外定义
+
+int main() {
+    Counter a;
+    {
+        Counter b;
+        cout << Counter::getTotal() << endl;
+    }
+    cout << Counter::getTotal() << endl;
+}`,
+          keywords: ["static int total", "Counter::total", "total++", "total--", "getTotal"],
+          solution: `#include <iostream>
+using namespace std;
+
+class Counter {
+private:
+    static int total;
+public:
+    Counter()  { total++; }
+    ~Counter() { total--; }
+    static int getTotal() { return total; }
+};
+
+int Counter::total = 0;
+
+int main() {
+    Counter a;
+    {
+        Counter b;
+        cout << Counter::getTotal() << endl; // 2
+    }
+    cout << Counter::getTotal() << endl;     // 1
+}`
+        }
+      },
+      {
+        id: "inheritance",
+        day: "第二天 · 20 分大题核心",
+        title: "继承与派生类构造",
+        time: 60,
+        weight: "继承 / 多类设计 20 分",
+        intro: "把继承理解为“提取共同部分”，然后掌握派生类如何初始化基类。",
+        goals: [
+          ["会提取父类", "把多个类的共同属性和行为放入基类。"],
+          ["掌握 public 继承", "理解基类 public/protected 在派生类中的权限。"],
+          ["掌握构造顺序", "先基类，再派生类；析构顺序相反。"],
+          ["会调用基类构造", "基类没有无参构造时，在初始化列表显式调用。"]
+        ],
+        concepts: [
+          ["继承", "从已有类建立新类，复用共同属性和行为。"],
+          ["public 继承", "基类 public 仍为 public，protected 仍为 protected。"],
+          ["基类 private", "派生类对象中存在，但派生类成员不能直接访问。"],
+          ["初始化顺序", "基类构造 → 成员对象构造 → 派生类构造函数体。"]
+        ],
+        method: ["多类题的设计顺序", "先圈出题目中的名词作为候选类，再找共同数据放入父类，最后找“每个子类算法不同”的函数作为虚函数。"],
+        exampleTitle: "例题：派生类构造函数错在哪里？",
+        example: `class Base {
+public:
+    Base(int value) { x = value; }
+private:
+    int x;
+};
+
+class Derived : public Base {
+public:
+    Derived(int value) : y(value) {}  // 错误
+private:
+    int y;
+};`,
+        steps: [
+          "创建 Derived 前必须先构造 Base 部分。",
+          "Base 只有 `Base(int)`，没有 `Base()`，因此不能自动完成。",
+          "应写成 `Derived(int value) : Base(value), y(value) {}`。"
+        ],
+        quiz: [
+          {
+            id: "q10",
+            text: "创建派生类对象时，构造函数调用顺序通常是什么？",
+            options: ["先派生类后基类", "先基类后派生类", "只调用派生类", "由 public/private 决定"],
+            answer: 1,
+            explain: "对象必须先具备基类部分，才能完成派生类部分。"
+          },
+          {
+            id: "q11",
+            text: "public 继承时，基类 protected 成员在派生类中是什么权限？",
+            options: ["public", "protected", "private", "不存在"],
+            answer: 1,
+            explain: "public 继承保持 public 和 protected 的原权限。"
+          },
+          {
+            id: "q12",
+            text: "基类只有 Base(int)，派生类构造函数应该怎样做？",
+            options: ["不需要处理", "在函数体内调用 Base(value)", "在初始化列表写 Base(value)", "将 Base 改为 private"],
+            answer: 2,
+            explain: "基类构造必须在派生类初始化列表中调用。"
+          }
+        ],
+        practice: {
+          title: "动手题：Person 与 Student",
+          prompt: "设计 Person 基类，保存 name；Student 公有继承 Person，增加 score。两者都提供 print()，Student 构造函数必须调用 Person 的带参构造。",
+          starter: `#include <iostream>
+#include <string>
+using namespace std;
+
+class Person {
+    // 完成基类
+};
+
+class Student : public Person {
+    // 完成派生类
+};
+
+int main() {
+    Student s("Li", 88);
+    s.print();
+}`,
+          keywords: ["class Person", "class Student : public Person", "Person(", ": Person(", "score", "print("],
+          solution: `#include <iostream>
+#include <string>
+using namespace std;
+
+class Person {
+protected:
+    string name;
+public:
+    Person(string n) : name(n) {}
+};
+
+class Student : public Person {
+private:
+    double score;
+public:
+    Student(string n, double s) : Person(n), score(s) {}
+
+    void print() const {
+        cout << name << " " << score << endl;
+    }
+};
+
+int main() {
+    Student s("Li", 88);
+    s.print();
+}`
+        }
+      },
+      {
+        id: "polymorphism",
+        day: "第二天 · 20 分大题核心",
+        title: "虚函数、多态与抽象类",
+        time: 60,
+        weight: "读程序 + 多类设计",
+        intro: "多态并不神秘：用同一个基类接口，让不同子类执行各自的版本。",
+        goals: [
+          ["背熟三个条件", "继承关系、虚函数、基类指针或引用调用。"],
+          ["理解动态联编", "运行时根据对象真实类型选择覆盖后的函数。"],
+          ["掌握纯虚函数", "会写 virtual double area() const = 0;。"],
+          ["理解虚析构", "通过基类指针 delete 派生对象时正确析构。"]
+        ],
+        concepts: [
+          ["虚函数", "基类函数前加 virtual，允许派生类覆盖并动态调用。"],
+          ["多态", "相同调用形式，对不同真实对象产生不同行为。"],
+          ["纯虚函数", "末尾写 = 0，用于规定子类必须实现的接口。"],
+          ["抽象类", "包含纯虚函数，不能直接创建对象，只能作为基类。"]
+        ],
+        method: ["多态题的固定检查表", "看基类函数有没有 virtual；看子类签名是否一致；看调用是否通过基类指针或引用；最后根据指针真正指向的对象确定输出。"],
+        exampleTitle: "例题：下面输出 Animal 还是 Bird？",
+        example: `class Animal {
+public:
+    virtual void sing() {
+        cout << "Animal" << endl;
+    }
+    virtual ~Animal() {}
+};
+
+class Bird : public Animal {
+public:
+    void sing() override {
+        cout << "Bird" << endl;
+    }
+};
+
+Animal* p = new Bird;
+p->sing();
+delete p;`,
+        steps: [
+          "Bird 公有继承 Animal，满足类型兼容。",
+          "基类 sing 是 virtual，子类使用相同签名覆盖。",
+          "通过基类指针 p 调用，p 实际指向 Bird，所以输出 `Bird`。",
+          "基类析构函数写为 virtual，确保 delete p 时先析构 Bird，再析构 Animal。"
+        ],
+        quiz: [
+          {
+            id: "q13",
+            text: "动态多态不要求下面哪一项？",
+            options: ["存在继承关系", "基类函数为 virtual", "通过指针或引用调用", "所有数据成员都为 public"],
+            answer: 3,
+            explain: "数据成员权限不是动态多态的条件。"
+          },
+          {
+            id: "q14",
+            text: "含有纯虚函数的类称为什么？",
+            options: ["友元类", "模板类", "抽象类", "静态类"],
+            answer: 2,
+            explain: "抽象类不能直接实例化，主要用于定义统一接口。"
+          },
+          {
+            id: "q15",
+            text: "为什么多态基类通常需要虚析构函数？",
+            options: ["提高运行速度", "允许重载 +", "通过基类指针删除派生对象时完整析构", "让 private 变 public"],
+            answer: 2,
+            explain: "否则通过基类指针 delete 派生对象时，派生类析构可能不会正确执行。"
+          }
+        ],
+        practice: {
+          title: "动手题：Shape 抽象基类",
+          prompt: "按照 PPT 题目：定义抽象基类 Shape，纯虚函数 area()；派生 Circle 和 Rectangle，分别计算面积；通过 Shape 指针测试多态。",
+          starter: `#include <iostream>
+using namespace std;
+
+class Shape {
+    // 纯虚函数 area 和虚析构
+};
+
+class Circle : public Shape {
+    // 半径、构造函数、area
+};
+
+class Rectangle : public Shape {
+    // 长宽、构造函数、area
+};
+
+int main() {
+    // 使用 Shape* 指向不同子类并输出面积
+}`,
+          keywords: ["class Shape", "virtual double area", "= 0", "class Circle : public Shape", "class Rectangle : public Shape", "override", "Shape*"],
+          solution: `#include <iostream>
+using namespace std;
+
+class Shape {
+public:
+    virtual double area() const = 0;
+    virtual ~Shape() {}
+};
+
+class Circle : public Shape {
+private:
+    double radius;
+public:
+    Circle(double r) : radius(r) {}
+    double area() const override {
+        return 3.14 * radius * radius;
+    }
+};
+
+class Rectangle : public Shape {
+private:
+    double width;
+    double height;
+public:
+    Rectangle(double w, double h) : width(w), height(h) {}
+    double area() const override {
+        return width * height;
+    }
+};
+
+int main() {
+    Circle circle(2);
+    Rectangle rectangle(3, 4);
+    Shape* shapes[] = {&circle, &rectangle};
+    for (Shape* shape : shapes) {
+        cout << shape->area() << endl;
+    }
+}`
+        }
+      },
+      {
+        id: "multi-class",
+        day: "第二天 · 20 分大题核心",
+        title: "20 分多类设计完整训练",
+        time: 75,
+        weight: "目标拿到 12–16 分",
+        intro: "这一节不再只看局部语法，而是按考试步骤完成一道完整设计题。",
+        goals: [
+          ["读题提取类", "找出基类、派生类、数据成员和行为。"],
+          ["先搭骨架", "先写继承关系和函数声明，再填函数体。"],
+          ["争取步骤分", "即使程序未完全完成，也留下正确类结构。"],
+          ["完成主函数", "使用基类指针或引用体现多态。"]
+        ],
+        concepts: [
+          ["共同信息", "员工号、姓名等放入 Employee。"],
+          ["变化行为", "不同岗位工资算法不同，因此 calcSalary 适合做虚函数。"],
+          ["Salesman", "工资为销售额 × 提成比例，本题给定 4%。"],
+          ["Manager", "固定月薪 8000 元。"]
+        ],
+        method: ["20 分题书写顺序", "① 基类数据与构造；② 纯虚函数；③ 虚析构；④ 子类数据与构造；⑤ override；⑥ main 测试。卡住时也不要打乱这个顺序。"],
+        exampleTitle: "题目拆解：Employee 工资系统",
+        example: `Employee
+  ├─ Salesman: sales × 4%
+  └─ Manager: 固定 8000
+
+统一接口：virtual double calcSalary() const = 0;`,
+        steps: [
+          "先写 Employee，保存 name，并声明纯虚函数 calcSalary。",
+          "Salesman 新增 sales，返回 `sales * 0.04`。",
+          "Manager 不必新增工资数据，也可以用构造参数保存固定工资。",
+          "main 中用 `Employee*` 数组统一调用 calcSalary，体现多态。",
+          "考试时每完成一个类就检查分号、public、构造函数和函数签名。"
+        ],
+        quiz: [
+          {
+            id: "q16",
+            text: "Employee 中最适合声明为纯虚函数的是哪个？",
+            options: ["姓名变量", "calcSalary()", "构造函数", "main()"],
+            answer: 1,
+            explain: "所有员工都要计算工资，但算法不同，正适合统一虚接口。"
+          },
+          {
+            id: "q17",
+            text: "子类没有实现父类纯虚函数时，会怎样？",
+            options: ["自动返回 0", "该子类仍是抽象类，不能实例化", "父类变为普通类", "编译器删除父类"],
+            answer: 1,
+            explain: "未实现全部纯虚函数的派生类仍然是抽象类。"
+          },
+          {
+            id: "q18",
+            text: "要统一处理 Salesman 和 Manager，对象集合最好使用什么？",
+            options: ["int 数组", "Employee* 数组或引用", "两个互不相关的函数", "static 数据成员"],
+            answer: 1,
+            explain: "基类指针或引用可以借助多态统一访问不同派生对象。"
+          }
+        ],
+        practice: {
+          title: "考试级编程题：Employee",
+          prompt: "独立完成 Employee、Salesman、Manager。要求构造函数初始化，calcSalary 为纯虚函数，main 中通过 Employee* 测试。先自己写 25 分钟，再自检。",
+          starter: `#include <iostream>
+#include <string>
+using namespace std;
+
+// 1. Employee 抽象基类
+
+// 2. Salesman：销售额的 4%
+
+// 3. Manager：固定 8000
+
+int main() {
+    // 4. 创建对象并使用 Employee* 调用
+    return 0;
+}`,
+          keywords: ["class Employee", "virtual double calcSalary", "= 0", "virtual ~Employee", "class Salesman : public Employee", "0.04", "class Manager : public Employee", "8000", "Employee*"],
+          solution: `#include <iostream>
+#include <string>
+using namespace std;
+
+class Employee {
+protected:
+    string name;
+public:
+    Employee(string n) : name(n) {}
+    virtual double calcSalary() const = 0;
+    virtual ~Employee() {}
+};
+
+class Salesman : public Employee {
+private:
+    double sales;
+public:
+    Salesman(string n, double s) : Employee(n), sales(s) {}
+    double calcSalary() const override {
+        return sales * 0.04;
+    }
+};
+
+class Manager : public Employee {
+public:
+    Manager(string n) : Employee(n) {}
+    double calcSalary() const override {
+        return 8000;
+    }
+};
+
+int main() {
+    Salesman salesman("Zhang", 100000);
+    Manager manager("Wang");
+    Employee* staff[] = {&salesman, &manager};
+
+    for (Employee* employee : staff) {
+        cout << employee->calcSalary() << endl;
+    }
+    return 0;
+}`
+        }
+      },
+      {
+        id: "operators",
+        day: "第三天 · 55 分编程区",
+        title: "运算符重载",
+        time: 70,
+        weight: "编程题 15 分",
+        intro: "运算符重载题形式固定，掌握成员版和友元版两个模板即可稳定拿分。",
+        goals: [
+          ["掌握基本语法", "会写 operator+、operator>、operator==。"],
+          ["区分参数数量", "二元运算符成员版一个显式参数，友元版两个参数。"],
+          ["掌握输入输出", "会写 ostream& operator<< 和 istream& operator>>。"],
+          ["牢记特殊规则", "[]、=、()、-> 必须作为成员函数重载。"]
+        ],
+        concepts: [
+          ["成员函数版", "左操作数是当前对象 this，因此二元运算只再接收右操作数。"],
+          ["友元函数版", "不是成员函数，左右两个操作数都要写在参数表。"],
+          ["输出重载", "返回 ostream&，第一个参数为 ostream&，通常声明为 friend。"],
+          ["不可改变规则", "不能创造新运算符，也不能改变优先级和操作数数量。"]
+        ],
+        method: ["先选重载形式", "需要左操作数为本类对象时可用成员函数；需要 cout << object 或左右类型不对称时，优先使用友元函数。"],
+        exampleTitle: "PPT 原型：Product 重载 > 和 <<",
+        example: `class Product {
+private:
+    double price;
+public:
+    Product(double p) : price(p) {}
+
+    bool operator>(const Product& other) const {
+        return price > other.price;
+    }
+
+    friend ostream& operator<<(ostream& out,
+                               const Product& product) {
+        out << product.price;
+        return out;
+    }
+};`,
+        steps: [
+          "`a > b` 可理解为 `a.operator>(b)`，所以成员版只有参数 b。",
+          "`cout << a` 左边是 ostream，不是 Product，通常写成 Product 的友元函数。",
+          "输出函数必须返回 `ostream&`，这样才能继续链式输出：`cout << a << endl`。"
+        ],
+        quiz: [
+          {
+            id: "q19",
+            text: "二元运算符作为成员函数重载时，通常有几个显式参数？",
+            options: ["0 个", "1 个", "2 个", "3 个"],
+            answer: 1,
+            explain: "左操作数由 this 表示，参数表只写右操作数。"
+          },
+          {
+            id: "q20",
+            text: "operator<< 通常返回什么类型以支持连续输出？",
+            options: ["void", "bool", "ostream&", "Product"],
+            answer: 2,
+            explain: "返回原输出流引用，才能继续执行后面的 <<。"
+          },
+          {
+            id: "q21",
+            text: "下面哪个运算符必须以成员函数形式重载？",
+            options: ["+", ">", "<<", "="],
+            answer: 3,
+            explain: "教材重点规则：[]、=、()、-> 必须作为成员函数。"
+          }
+        ],
+        practice: {
+          title: "考试级编程题：Complex",
+          prompt: "设计复数类 Complex，重载 +、== 和 <<。要求使用构造函数初始化，+ 返回新的 Complex 对象。",
+          starter: `#include <iostream>
+using namespace std;
+
+class Complex {
+private:
+    double real;
+    double imag;
+public:
+    // 构造函数
+    // operator+
+    // operator==
+    // operator<<
+};
+
+int main() {
+    Complex a(1, 2), b(3, 4);
+    cout << a + b << endl;
+}`,
+          keywords: ["class Complex", "Complex(", "operator+", "operator==", "friend ostream& operator<<", "return out"],
+          solution: `#include <iostream>
+using namespace std;
+
+class Complex {
+private:
+    double real;
+    double imag;
+public:
+    Complex(double r = 0, double i = 0) : real(r), imag(i) {}
+
+    Complex operator+(const Complex& other) const {
+        return Complex(real + other.real, imag + other.imag);
+    }
+
+    bool operator==(const Complex& other) const {
+        return real == other.real && imag == other.imag;
+    }
+
+    friend ostream& operator<<(ostream& out, const Complex& value) {
+        out << value.real << "+" << value.imag << "i";
+        return out;
+    }
+};
+
+int main() {
+    Complex a(1, 2), b(3, 4);
+    cout << a + b << endl; // 4+6i
+}`
+        }
+      },
+      {
+        id: "templates",
+        day: "第三天 · 55 分编程区",
+        title: "函数模板与类模板",
+        time: 55,
+        weight: "编程题 10 分",
+        intro: "模板题的核心不是复杂算法，而是把具体类型替换成 T，并正确实例化。",
+        goals: [
+          ["会写函数模板", "掌握 template<typename T> 和返回类型 T。"],
+          ["会调用函数模板", "理解编译器可根据实参推导 T。"],
+          ["会写类模板", "用 T 声明数据成员和成员函数参数。"],
+          ["会正确实例化", "必须写 Menu<int>，不能直接写 Menu。"]
+        ],
+        concepts: [
+          ["函数模板", "为多种类型描述同一套函数逻辑。"],
+          ["typename T", "T 是类型占位符，可以替换为 int、double 或类类型。"],
+          ["类模板", "使用类型参数定义一整类相似的类。"],
+          ["实例化", "类模板创建对象时必须给出具体类型，如 Box<double>。"]
+        ],
+        method: ["模板题的改写法", "先写一个只处理 int 的正确函数或类，再把所有需要变化的 int 替换为 T，最后在最前面加 template<typename T>。"],
+        exampleTitle: "例题：通用绝对值函数",
+        example: `template<typename T>
+T absoluteValue(T value) {
+    return value < 0 ? -value : value;
+}
+
+cout << absoluteValue(-12) << endl;
+cout << absoluteValue(-3.5) << endl;`,
+        steps: [
+          "第一次调用根据 -12 推导 T 为 int。",
+          "第二次调用根据 -3.5 推导 T 为 double。",
+          "同一份代码生成适用于不同类型的函数版本。"
+        ],
+        quiz: [
+          {
+            id: "q22",
+            text: "创建类模板 Menu 的 int 对象，正确写法是什么？",
+            options: ["Menu object;", "Menu<T> object;", "Menu<int> object;", "template Menu object;"],
+            answer: 2,
+            explain: "类模板实例化时需要提供具体类型参数。"
+          },
+          {
+            id: "q23",
+            text: "template<typename T> 中 T 表示什么？",
+            options: ["固定整数", "类型占位符", "对象名称", "命名空间"],
+            answer: 1,
+            explain: "T 在实例化或调用时替换成具体数据类型。"
+          },
+          {
+            id: "q24",
+            text: "函数模板的模板参数应在哪里得到使用？",
+            options: ["只能在注释中", "参数或返回类型等函数声明/实现中", "只能在 main 中", "不需要使用"],
+            answer: 1,
+            explain: "模板参数必须参与函数的类型描述，否则模板没有意义。"
+          }
+        ],
+        practice: {
+          title: "动手题：求两个值中的较大者",
+          prompt: "编写函数模板 myMax，接收两个同类型参数，返回较大值；分别使用 int 和 double 测试。",
+          starter: `#include <iostream>
+using namespace std;
+
+// 在这里定义函数模板 myMax
+
+int main() {
+    cout << myMax(3, 8) << endl;
+    cout << myMax(2.5, 1.2) << endl;
+}`,
+          keywords: ["template", "typename T", "T myMax", "T a", "T b", "return"],
+          solution: `#include <iostream>
+using namespace std;
+
+template<typename T>
+T myMax(T a, T b) {
+    return a > b ? a : b;
+}
+
+int main() {
+    cout << myMax(3, 8) << endl;
+    cout << myMax(2.5, 1.2) << endl;
+}`
+        }
+      },
+      {
+        id: "reading-debug",
+        day: "第三天 · 综合提分",
+        title: "读程序与改错专项",
+        time: 55,
+        weight: "45 分客观题",
+        intro: "前面学的是知识，这一节把知识转换成考试时可重复使用的答题动作。",
+        goals: [
+          ["读程序不跳步", "按对象、构造、函数调用、析构逐行跟踪。"],
+          ["改错定位准确", "先写具体代码位置，再解释规则。"],
+          ["熟悉高频错误", "访问权限、构造函数、基类初始化、抽象类、模板实例化。"],
+          ["控制答题时间", "读程序每题约 6 分钟，改错每题约 4 分钟。"]
+        ],
+        concepts: [
+          ["访问错误", "类外对象访问 private/protected。"],
+          ["构造错误", "写返回类型、缺少无参构造、基类未初始化。"],
+          ["抽象类错误", "直接定义含纯虚函数的类的对象。"],
+          ["模板错误", "类模板未提供具体类型就创建对象。"]
+        ],
+        method: ["改错题满分句式", "错误在“原代码”；因为“违反的 C++ 规则”；应修改为“正确代码”。三部分都写，避免只圈位置不解释。"],
+        exampleTitle: "五种高频错误速查",
+        example: `1. obj.privateData;        // 类外访问私有成员
+2. void A() {}             // 构造函数写了返回类型
+3. Derived() {}            // 基类无默认构造却未显式调用
+4. Abstract a;             // 抽象类直接实例化
+5. Menu object;            // 类模板未给具体类型`,
+        steps: [
+          "看到点号访问，立即检查成员权限。",
+          "看到与类同名的函数，立即检查是否写了返回类型。",
+          "看到派生类构造，立即检查基类有没有无参构造。",
+          "看到 `= 0`，立即判断该类及未实现函数的子类不能实例化。",
+          "看到模板类对象，立即检查尖括号中的具体类型。"
+        ],
+        quiz: [
+          {
+            id: "q25",
+            text: "class E { public: virtual void m() = 0; }; E e; 错误原因是什么？",
+            options: ["m 没有参数", "E 是抽象类，不能直接实例化", "virtual 只能用于析构", "e 必须是 static"],
+            answer: 1,
+            explain: "含纯虚函数的 E 是抽象类，只能作为基类使用。"
+          },
+          {
+            id: "q26",
+            text: "class Menu 是类模板，下面哪项是典型错误？",
+            options: ["Menu<int> a;", "Menu<double> b;", "Menu a;", "Menu<char> c;"],
+            answer: 2,
+            explain: "创建类模板对象必须提供具体模板实参。"
+          },
+          {
+            id: "q27",
+            text: "改错题只写“这一行错了”，通常为什么容易丢分？",
+            options: ["字数太少", "缺少错误原因和正确规则", "必须写英文", "必须运行程序"],
+            answer: 1,
+            explain: "题目明确要求指出错误并说明原因，最好再给出修改方式。"
+          }
+        ],
+        practice: {
+          title: "规范改错表达训练",
+          prompt: "针对下面代码写出完整改错答案：基类 Base 只有 Base(int)，派生类 Derived 的构造函数写成 Derived(int x) : value(x) {}。请在编辑区写“位置 + 原因 + 修改”。",
+          starter: `错误位置：
+
+错误原因：
+
+修改方式：
+`,
+          keywords: ["Derived", "Base", "无参构造", "初始化列表", "Base(x)"],
+          solution: `错误位置：
+Derived(int x) : value(x) {}
+
+错误原因：
+构造 Derived 对象前必须先构造 Base 部分，而 Base 只有 Base(int)，
+没有默认无参构造函数。派生类构造函数没有显式调用 Base(int)。
+
+修改方式：
+Derived(int x) : Base(x), value(x) {}`
+        }
+      }
+    ];
+
+    const mockQuestions = [
+      ["普通对象不能直接访问哪类成员？", ["public", "private", "构造函数", "main"], 1, 4],
+      ["定义了 A(int) 后执行 A a; 的主要问题是？", ["缺少析构", "缺少无参构造", "缺少友元", "缺少模板"], 1, 4],
+      ["派生类对象构造顺序是？", ["派生类→基类", "基类→派生类", "只构造派生类", "随机"], 1, 4],
+      ["动态多态要求基类函数使用哪个关键字？", ["static", "friend", "virtual", "const"], 2, 5],
+      ["抽象类能否直接创建对象？", ["能", "不能", "只能创建数组", "只能在 main 外创建"], 1, 5],
+      ["二元运算符成员函数版通常有几个显式参数？", ["0", "1", "2", "3"], 1, 4],
+      ["输出运算符重载通常返回？", ["ostream&", "void", "bool", "int"], 0, 5],
+      ["类模板正确实例化形式是？", ["Box b", "Box<T> b", "Box<int> b", "template Box b"], 2, 4],
+      ["A b = a 通常调用？", ["赋值运算", "拷贝构造", "析构", "默认参数"], 1, 4],
+      ["通过基类指针删除派生对象，基类析构应当是？", ["private", "static", "virtual", "friend"], 2, 6]
+    ];
+
+    const mockCoding = [
+      { title: "单类设计", max: 10, checks: ["类与数据成员 2 分", "访问权限合理 2 分", "构造函数 2 分", "成员函数 2 分", "main 测试 2 分"] },
+      { title: "运算符重载", max: 15, checks: ["类定义与构造 3 分", "比较或算术运算符 5 分", "<< 或 >> 友元重载 5 分", "main 测试 2 分"] },
+      { title: "函数模板", max: 10, checks: ["template 声明 3 分", "T 正确用于返回值和参数 3 分", "函数逻辑 2 分", "两种类型测试 2 分"] },
+      { title: "继承与多类设计", max: 20, checks: ["基类设计 4 分", "继承关系 3 分", "虚函数/纯虚函数 4 分", "两个子类覆盖 5 分", "多态测试 4 分"] }
+    ];
+
+    const exampleBank = [
+      {
+        id: "vending-basic",
+        lessons: ["class-access", "constructor"],
+        category: "单类设计",
+        difficulty: "基础",
+        points: 25,
+        title: "矿泉水自动贩卖机类",
+        prompt: "设计 VendingMachine 类，用带参构造函数初始化售价、成本价和数量；成员函数完成销售一定数量、计算销售额与利润，并在 main 中测试。",
+        focus: ["私有数据成员", "带参构造", "库存边界", "销售额与利润"],
+        outline: [
+          "成员可设 unitPrice、costPrice、stock、sold。",
+          "sell(count) 先判断 count 是否为正且不超过库存。",
+          "销售额 = sold × unitPrice；利润 = sold × (unitPrice - costPrice)。",
+          "main 至少测试正常销售和库存不足两种情况。"
+        ]
+      },
+      {
+        id: "pixel-io",
+        lessons: ["class-access", "operators"],
+        category: "运算符重载",
+        difficulty: "基础",
+        points: 25,
+        title: "Pixel 输入输出运算符",
+        prompt: "设计 Pixel 类描述红、绿、蓝三个分量；构造函数初始化，并重载 >> 和 << 完成对象输入输出。",
+        focus: ["friend", "istream&", "ostream&", "链式输入输出"],
+        outline: [
+          "private 成员为 red、green、blue。",
+          "operator>> 返回 istream&，读取三个分量。",
+          "operator<< 返回 ostream&，输出格式可为 (r,g,b)。",
+          "可增加 0–255 范围检查作为完善项。"
+        ]
+      },
+      {
+        id: "student-static",
+        lessons: ["class-tools"],
+        category: "静态成员",
+        difficulty: "基础",
+        points: 25,
+        title: "Student 人数、总分与平均分",
+        prompt: "Student 包含分数 score，静态成员 count 和 total，使用静态成员函数返回总人数、总分和平均分。",
+        focus: ["static 数据", "类外定义", "构造累加", "静态函数"],
+        outline: [
+          "构造 Student 时 count++、total += score。",
+          "类外定义 int Student::count = 0。",
+          "平均值要处理 count 为 0 的情况。",
+          "静态函数不能直接访问普通对象成员。"
+        ]
+      },
+      {
+        id: "rational-basic",
+        lessons: ["class-access", "constructor"],
+        category: "单类设计",
+        difficulty: "基础",
+        points: 25,
+        title: "有理数类基础运算",
+        prompt: "定义 Rational 类，用两个整数表示分子和分母；完成构造、输出以及加减乘除成员函数，不要求约分。",
+        focus: ["构造函数", "分母检查", "返回新对象", "成员函数"],
+        outline: [
+          "构造时禁止分母为 0。",
+          "加法公式为 (a*d+b*c)/(b*d)。",
+          "每种运算返回一个新的 Rational 对象。",
+          "输出保持 numerator/denominator 格式。"
+        ]
+      },
+      {
+        id: "complex-class",
+        lessons: ["class-access", "class-tools"],
+        category: "单类设计",
+        difficulty: "基础",
+        points: 25,
+        title: "Complex 复数类",
+        prompt: "Complex 类包含实部与虚部，实现构造、读写成员、相等判断、加减、求模和输出。",
+        focus: ["封装", "const 成员函数", "对象返回", "sqrt"],
+        outline: [
+          "real 和 imag 设为 private。",
+          "模为 sqrt(real*real + imag*imag)。",
+          "比较时基础题可直接比较两成员，高要求可讨论浮点误差。",
+          "加减运算可先写普通成员函数，再改为运算符。"
+        ]
+      },
+      {
+        id: "onedim-array",
+        lessons: ["constructor", "class-tools"],
+        category: "动态内存",
+        difficulty: "进阶",
+        points: 25,
+        title: "一维动态数组类 onedim",
+        prompt: "实现动态数组的构造初始化、赋值、打印和析构清理，并正确处理深拷贝。",
+        focus: ["new[]/delete[]", "析构", "拷贝构造", "operator="],
+        outline: [
+          "构造函数按长度 new[]，析构函数 delete[]。",
+          "拷贝构造和赋值都必须重新分配内存并复制元素。",
+          "赋值运算需要处理自赋值。",
+          "这是区分浅拷贝与深拷贝的高价值题。"
+        ]
+      },
+      {
+        id: "set-operators",
+        lessons: ["constructor", "operators", "class-tools"],
+        category: "运算符重载",
+        difficulty: "综合",
+        points: 30,
+        title: "整型集合 Set",
+        prompt: "设计整型集合类，元素明确、互异且无序；重载 +、-、* 分别实现并集、差集、交集，并重载赋值运算符。",
+        focus: ["动态存储", "去重", "operator+", "operator-", "operator*", "operator="],
+        outline: [
+          "先实现 contains(value) 和 add(value)，所有集合运算复用它们。",
+          "并集先复制左集合，再加入右集合中不存在的元素。",
+          "差集保留仅存在于左集合的元素；交集保留两边都有的元素。",
+          "若使用动态数组，必须实现深拷贝和析构。"
+        ]
+      },
+      {
+        id: "rational-operators",
+        lessons: ["operators"],
+        category: "运算符重载",
+        difficulty: "综合",
+        points: 25,
+        title: "有理数完整运算符重载",
+        prompt: "重载 +、-、*、/、==、>、< 和 <<，实现有理数运算与比较。",
+        focus: ["算术运算符", "关系运算符", "输出运算符", "交叉相乘"],
+        outline: [
+          "算术运算返回 Rational 新对象。",
+          "比较可用交叉相乘避免转为浮点数。",
+          "除法要检查右操作数分子不能为 0。",
+          "operator<< 作为友元并返回 ostream&。"
+        ]
+      },
+      {
+        id: "vector-friend",
+        lessons: ["class-tools", "operators"],
+        category: "友元函数",
+        difficulty: "进阶",
+        points: 25,
+        title: "三维向量的和、差与长度",
+        prompt: "设计 Vector3D 类，用友元函数计算两个向量的和、差，以及单个向量的长度。",
+        focus: ["friend", "对象参数", "sqrt", "返回对象"],
+        outline: [
+          "成员为 x、y、z。",
+          "add/sub 友元函数访问私有成员并返回新向量。",
+          "length 返回 sqrt(x*x+y*y+z*z)。",
+          "可进一步改写为 + 和 - 运算符。"
+        ]
+      },
+      {
+        id: "array-max-template",
+        lessons: ["templates"],
+        category: "函数模板",
+        difficulty: "基础",
+        points: 10,
+        title: "返回数组最大元素",
+        prompt: "设计函数模板，接收数组和长度，返回数组中的最大元素。",
+        focus: ["template<typename T>", "数组参数", "边界", "返回 T"],
+        outline: [
+          "以第 0 个元素初始化 maxValue。",
+          "从下标 1 开始遍历。",
+          "长度必须大于 0。",
+          "分别用 int 和 double 数组测试。"
+        ]
+      },
+      {
+        id: "array-sort-template",
+        lessons: ["templates"],
+        category: "函数模板",
+        difficulty: "进阶",
+        points: 25,
+        title: "数组从大到小排序",
+        prompt: "设计排序函数模板，对数组按从大到小排序，并用两种不同类型数组实例化。",
+        focus: ["函数模板", "比较交换", "双重循环", "两种类型"],
+        outline: [
+          "可使用选择排序或冒泡排序。",
+          "交换变量也必须使用 T。",
+          "测试 int 与 double，或 int 与 char。",
+          "输出排序前后结果便于验证。"
+        ]
+      },
+      {
+        id: "class-template-array",
+        lessons: ["templates", "constructor"],
+        category: "类模板",
+        difficulty: "综合",
+        points: 25,
+        title: "把数组类改写为类模板",
+        prompt: "将固定数据类型的一维数组类改成类模板，并在 main 中实例化两种不同类型。",
+        focus: ["template class", "T* data", "构造析构", "实例化"],
+        outline: [
+          "类名前添加 template<typename T>。",
+          "数组指针从具体类型改为 T*。",
+          "类外成员定义要写 template<typename T> 和 Class<T>::。",
+          "使用 Array<int> 与 Array<double> 测试。"
+        ]
+      },
+      {
+        id: "shape-racing",
+        lessons: ["inheritance", "polymorphism", "multi-class"],
+        category: "继承多态",
+        difficulty: "综合",
+        points: 25,
+        title: "赛车比赛模拟",
+        prompt: "设计抽象赛车基类，包含最高速度、加速度和计算完成时间的虚函数；派生 FormulaCar 与 RallyCar，用动态联编测试。",
+        focus: ["抽象基类", "纯虚函数", "派生类", "基类指针"],
+        outline: [
+          "先明确时间计算公式或按题目给定模型实现。",
+          "基类声明 virtual double raceTime(double distance) const = 0。",
+          "两个子类使用不同参数或算法覆盖。",
+          "通过基类指针数组统一输出比赛时间。"
+        ]
+      },
+      {
+        id: "fruit-polymorphism",
+        lessons: ["inheritance", "polymorphism", "multi-class"],
+        category: "继承多态",
+        difficulty: "进阶",
+        points: 25,
+        title: "水果促销多态",
+        prompt: "fruit 基类包含单价和虚函数 GetSalePrice；派生 Strawberry 实现买 3 送 1，Orange 实现总价超过 48 减 5。",
+        focus: ["虚函数", "促销算法", "派生类构造", "多态"],
+        outline: [
+          "GetSalePrice 可接收购买数量。",
+          "草莓实际付费盒数 = count - count/4。",
+          "芦柑先计算 count*unitPrice，再判断是否减 5。",
+          "用 fruit* 分别指向两个派生对象计算总金额。"
+        ]
+      },
+      {
+        id: "salary-polymorphism",
+        lessons: ["class-tools", "polymorphism", "multi-class"],
+        category: "继承多态",
+        difficulty: "综合",
+        points: 25,
+        title: "公司工资管理",
+        prompt: "员工编号从 10000 起自动生成；经理固定 8000，销售员按销售额 4%，兼职技术人员按 100 元/小时，使用多态计算工资总额。",
+        focus: ["static 编号", "纯虚函数", "三个派生类", "工资总额"],
+        outline: [
+          "Employee 中设置 static int nextId。",
+          "构造时 id = nextId++。",
+          "calcSalary 作为纯虚函数。",
+          "用 Employee* 容器遍历并累加工资。"
+        ]
+      },
+      {
+        id: "teacher-salary",
+        lessons: ["inheritance", "polymorphism"],
+        category: "继承多态",
+        difficulty: "进阶",
+        points: 25,
+        title: "教师职称工资",
+        prompt: "基类 Teacher 派生 Professor、AssociateProfessor、Lecturer；工资为固定工资加课时补贴，使用多态计算若干教师月工资。",
+        focus: ["共同数据", "不同费率", "覆盖函数", "基类指针"],
+        outline: [
+          "基类保存姓名和课时数。",
+          "salary() 设为虚函数或纯虚函数。",
+          "三个子类分别使用 5000+75h、3000+65h、2000+60h。",
+          "main 使用 Teacher* 数组测试。"
+        ]
+      },
+      {
+        id: "circle-solids",
+        lessons: ["inheritance", "constructor"],
+        category: "继承设计",
+        difficulty: "进阶",
+        points: 25,
+        title: "Circle、Sphere 与 Column",
+        prompt: "Circle 作为基类保存半径并计算圆面积；Sphere 与 Column 派生并计算表面积和体积，为每个类添加构造与析构。",
+        focus: ["公有继承", "基类构造", "几何公式", "调用顺序"],
+        outline: [
+          "Circle 保存 radius，并提供 area()。",
+          "Sphere 表面积 4πr²，体积 4πr³/3。",
+          "Column 还需 height，表面积 2πr²+2πrh，体积 πr²h。",
+          "派生类初始化列表显式调用 Circle(r)。"
+        ]
+      },
+      {
+        id: "date-formats",
+        lessons: ["inheritance", "polymorphism"],
+        category: "继承设计",
+        difficulty: "进阶",
+        points: 25,
+        title: "日期多格式输出",
+        prompt: "从 Date 派生 ShortE、MediumDate 和 LongDate，各自覆盖 print() 输出不同日期格式。",
+        focus: ["覆盖函数", "格式化输出", "月份映射", "继承"],
+        outline: [
+          "Date 保存 month、day、year。",
+          "print 可声明为 virtual。",
+          "英文月份使用字符串数组映射。",
+          "用基类指针依次调用不同格式。"
+        ]
+      },
+      {
+        id: "library-system",
+        lessons: ["class-access", "multi-class"],
+        category: "综合系统",
+        difficulty: "综合",
+        points: 60,
+        title: "图书管理系统",
+        prompt: "Book 支持信息显示、借阅、归还；LibraryMan 管理图书数组，支持添加、按 ISBN 借阅归还、显示与查询。",
+        focus: ["职责划分", "对象数组", "ISBN 查找", "库存状态", "主函数场景"],
+        outline: [
+          "Book 只负责单本书的信息和库存行为。",
+          "LibraryMan 负责保存多个 Book，并按 ISBN 查找。",
+          "把查找逻辑提取为私有 findBook 函数，减少重复。",
+          "main 测试添加、成功借阅、库存不足、归还、查询。"
+        ]
+      },
+      {
+        id: "machine-goods",
+        lessons: ["class-access", "multi-class"],
+        category: "综合系统",
+        difficulty: "综合",
+        points: 25,
+        title: "Goods 与 Machine 自动售货系统",
+        prompt: "Goods 保存编号、名称、价格；Machine 管理三种商品与库存，完成显示状态、投币购买和找零。",
+        focus: ["两个类协作", "库存数组", "查找商品", "付款与找零"],
+        outline: [
+          "Goods 只负责商品属性和访问接口。",
+          "Machine 保存 Goods 与对应库存。",
+          "购买时检查编号、库存、投入金额。",
+          "成功后库存减 1，并返回 change = money - price。"
+        ]
+      },
+      {
+        id: "file-leap-year",
+        lessons: ["reading-debug"],
+        category: "文件读写",
+        difficulty: "进阶",
+        points: 25,
+        title: "将闰年写入 result.txt",
+        prompt: "查找 1900–2030 年之间的闰年，并把结果写入 result.txt。",
+        focus: ["ofstream", "文件打开检查", "闰年判断", "close"],
+        outline: [
+          "闰年条件：(year%4==0 && year%100!=0) || year%400==0。",
+          "使用 ofstream outfile(\"result.txt\")。",
+          "先判断 outfile 是否成功打开。",
+          "当前网站不建议把路径写死为 D 盘，以提高可移植性。"
+        ]
+      },
+      {
+        id: "file-average",
+        lessons: ["class-access", "reading-debug"],
+        category: "文件读写",
+        difficulty: "进阶",
+        points: 25,
+        title: "File 类读取成绩并求平均",
+        prompt: "File::average() 从 score.txt 读取若干成绩，求平均值并返回，在 main 中测试。",
+        focus: ["ifstream", "循环读取", "总和与数量", "空文件"],
+        outline: [
+          "使用 while (infile >> score) 循环。",
+          "维护 sum 和 count。",
+          "文件打不开或 count==0 时要给出处理。",
+          "average 返回 double。"
+        ]
+      },
+      {
+        id: "isbn-check",
+        lessons: ["reading-debug"],
+        category: "算法与字符串",
+        difficulty: "进阶",
+        points: 25,
+        title: "ISBN 校验码判断",
+        prompt: "输入 x-xxx-xxxxx-x 格式 ISBN，取前 9 位数字按位置 1–9 加权求和并模 11，判断末位校验码是否正确。",
+        focus: ["字符串遍历", "跳过分隔符", "加权求和", "X 校验码"],
+        outline: [
+          "遍历字符串并收集数字字符。",
+          "前 9 位分别乘以 1–9。",
+          "余数 10 时校验码应为 X。",
+          "先检查输入格式与有效数字数量。"
+        ]
+      }
+    ];
+
+    const targetProfiles = {
+      60: {
+        label: "60 分保底",
+        description: "优先掌握基础语法、单类设计、继承基础、运算符、模板和高频改错。",
+        lessonIds: ["class-access", "constructor", "inheritance", "operators", "templates", "reading-debug"],
+        reviewMinutes: 30,
+        mockMinutes: 60
+      },
+      70: {
+        label: "70 分稳过",
+        description: "覆盖全部高频得分区，并加入多态和 20 分多类设计训练。",
+        lessonIds: ["class-access", "constructor", "inheritance", "polymorphism", "multi-class", "operators", "templates", "reading-debug"],
+        reviewMinutes: 45,
+        mockMinutes: 90
+      },
+      80: {
+        label: "80 分强化",
+        description: "完成全部知识模块，减少细节题失分，并完成完整模拟。",
+        lessonIds: lessons.map(lesson => lesson.id),
+        reviewMinutes: 60,
+        mockMinutes: 120
+      },
+      90: {
+        label: "90 分冲刺",
+        description: "完成全部模块、综合编程、错题复写和二次模拟，追求答案完整性。",
+        lessonIds: lessons.map(lesson => lesson.id),
+        reviewMinutes: 90,
+        mockMinutes: 150,
+        secondMockMinutes: 60
+      }
+    };
+
+    const defaultState = {
+      current: "home",
+      profile: {
+        configured: false,
+        days: 3,
+        hoursPerDay: 5,
+        target: 70
+      },
+      completed: [],
+      knownConcepts: {},
+      answers: {},
+      wrong: [],
+      code: {},
+      mockAnswers: {},
+      mockCoding: {}
+    };
+
+    let activeStudentId = "";
+    let authMode = "public-static";
+    let state = createDefaultState();
+    const content = document.getElementById("content");
+    const sidebar = document.getElementById("sidebar");
+
+    function createDefaultState() {
+      return {
+        ...defaultState,
+        profile: { ...defaultState.profile },
+        completed: [],
+        knownConcepts: {},
+        answers: {},
+        wrong: [],
+        code: {},
+        mockAnswers: {},
+        mockCoding: {}
+      };
+    }
+
+    function stateStorageKey(studentId = activeStudentId) {
+      return `cppReviewState:${studentId || "guest"}`;
+    }
+
+    function loadState(studentId) {
+      try {
+        const stored =
+          JSON.parse(localStorage.getItem(stateStorageKey(studentId)) || "null") ||
+          JSON.parse(localStorage.getItem("cppReviewState") || "{}");
+        return {
+          ...defaultState,
+          ...stored,
+          profile: { ...defaultState.profile, ...(stored.profile || {}) },
+          knownConcepts: stored.knownConcepts || {},
+          answers: stored.answers || {},
+          code: stored.code || {},
+          mockAnswers: stored.mockAnswers || {},
+          mockCoding: stored.mockCoding || {}
+        };
+      } catch {
+        return createDefaultState();
+      }
+    }
+
+    function saveState() {
+      if (activeStudentId) {
+        localStorage.setItem(stateStorageKey(), JSON.stringify(state));
+      }
+      updateProgress();
+      renderNav();
+    }
+
+    function getDeviceId() {
+      let deviceId = localStorage.getItem("cppReviewDeviceId");
+      if (!deviceId) {
+        const bytes = new Uint8Array(24);
+        crypto.getRandomValues(bytes);
+        deviceId = Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
+        localStorage.setItem("cppReviewDeviceId", deviceId);
+      }
+      return deviceId;
+    }
+
+    function getLocalBinding() {
+      try {
+        return JSON.parse(localStorage.getItem("cppReviewStudentBinding") || "null");
+      } catch {
+        return null;
+      }
+    }
+
+    function setLocalBinding(studentId) {
+      localStorage.setItem("cppReviewStudentBinding", JSON.stringify({
+        studentId,
+        deviceId: getDeviceId(),
+        boundAt: new Date().toISOString()
+      }));
+    }
+
+    async function detectAuthMode() {
+      authMode = "public-static";
+    }
+
+    async function activateStudent(studentId) {
+      const binding = getLocalBinding();
+      if (binding && binding.studentId !== studentId) {
+        throw new Error(`当前浏览器已经绑定学号 ${binding.studentId}，不能改用其他学号。`);
+      }
+      setLocalBinding(studentId);
+      return { mode: "public-static" };
+    }
+
+    function updateLoginModeText() {
+      const node = document.getElementById("loginMode");
+      node.textContent = "当前为公网静态版：学号与进度保存在当前浏览器中。更换浏览器、清除浏览器数据或使用其他电脑后，系统无法识别为同一设备。";
+    }
+
+    async function initializeLogin() {
+      await detectAuthMode();
+      updateLoginModeText();
+      const binding = getLocalBinding();
+
+      if (binding?.studentId) {
+        try {
+          await activateStudent(binding.studentId);
+          completeLogin(binding.studentId);
+          return;
+        } catch (error) {
+          document.getElementById("loginError").textContent = error.message;
+        }
+      }
+
+      document.getElementById("loginOverlay").classList.remove("hidden");
+      document.body.classList.add("auth-pending");
+    }
+
+    function completeLogin(studentId) {
+      activeStudentId = studentId;
+      state = loadState(studentId);
+      document.getElementById("studentBadge").textContent = `学号 ${studentId}`;
+      document.getElementById("loginOverlay").classList.add("hidden");
+      document.body.classList.remove("auth-pending");
+      renderNav();
+      updateProgress();
+      updateCountdown();
+      if (!state.profile.configured) showHome(true);
+      else if (state.current === "mock") showMock();
+      else if (state.current === "wrong") showWrongBook();
+      else if (state.current === "bank") showExampleBank();
+      else if (lessons.some(lesson => lesson.id === state.current)) showLesson(state.current);
+      else showHome();
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function getTargetProfile() {
+      return targetProfiles[state.profile.target] || targetProfiles[70];
+    }
+
+    function getRecommendedLessons() {
+      const ids = getTargetProfile().lessonIds;
+      return ids.map(id => lessons.find(lesson => lesson.id === id)).filter(Boolean);
+    }
+
+    function conceptKey(lessonId, conceptIndex) {
+      return `${lessonId}:${conceptIndex}`;
+    }
+
+    function isConceptKnown(lessonId, conceptIndex) {
+      return Boolean(state.knownConcepts[conceptKey(lessonId, conceptIndex)]);
+    }
+
+    function isLessonKnown(lesson) {
+      return lesson.concepts.length > 0 &&
+        lesson.concepts.every((_, index) => isConceptKnown(lesson.id, index));
+    }
+
+    function estimatedLessonMinutes(lesson) {
+      const unknownCount = lesson.concepts.filter((_, index) => !isConceptKnown(lesson.id, index)).length;
+      if (!unknownCount) return 0;
+      const ratio = unknownCount / lesson.concepts.length;
+      return Math.max(20, Math.round((lesson.time * (0.4 + ratio * 0.6)) / 5) * 5);
+    }
+
+    function buildSchedule(includeCompleted = false) {
+      const profile = getTargetProfile();
+      const dayCount = Number(state.profile.days) || 3;
+      const capacity = (Number(state.profile.hoursPerDay) || 5) * 60;
+      const tasks = getRecommendedLessons()
+        .filter(lesson => !isLessonKnown(lesson))
+        .filter(lesson => includeCompleted || !state.completed.includes(lesson.id))
+        .map(lesson => ({
+          type: "lesson",
+          id: lesson.id,
+          title: lesson.title,
+          minutes: estimatedLessonMinutes(lesson)
+        }));
+
+      if (!includeCompleted) {
+        tasks.push({ type: "review", title: "错题补练与知识点回忆", minutes: profile.reviewMinutes });
+        tasks.push({ type: "mock", title: "限时模拟与订正", minutes: profile.mockMinutes });
+        if (profile.secondMockMinutes) {
+          tasks.push({ type: "mock", title: "二次模拟与薄弱题复写", minutes: profile.secondMockMinutes });
+        }
+      }
+
+      const totalMinutes = tasks.reduce((sum, task) => sum + task.minutes, 0);
+      const idealPerDay = Math.max(1, Math.ceil(totalMinutes / dayCount / 5) * 5);
+      const days = Array.from({ length: dayCount }, (_, index) => ({
+        number: index + 1,
+        minutes: 0,
+        tasks: []
+      }));
+      let currentDay = 0;
+
+      tasks.forEach(task => {
+        const day = days[currentDay];
+        if (
+          currentDay < dayCount - 1 &&
+          day.tasks.length &&
+          day.minutes + task.minutes > idealPerDay + 20
+        ) {
+          currentDay++;
+        }
+        days[currentDay].tasks.push(task);
+        days[currentDay].minutes += task.minutes;
+      });
+
+      return {
+        days,
+        totalMinutes,
+        capacity,
+        totalCapacity: capacity * dayCount,
+        overloaded: totalMinutes > capacity * dayCount
+      };
+    }
+
+    function getNextLesson(currentId = "") {
+      const recommended = getRecommendedLessons();
+      const startIndex = Math.max(-1, recommended.findIndex(lesson => lesson.id === currentId));
+      return recommended
+        .slice(startIndex + 1)
+        .find(lesson => !state.completed.includes(lesson.id) && !isLessonKnown(lesson)) ||
+        recommended.find(lesson => !state.completed.includes(lesson.id) && !isLessonKnown(lesson));
+    }
+
+    function renderNav() {
+      const nav = document.getElementById("lessonNav");
+      const recommendedIds = getTargetProfile().lessonIds;
+      const schedule = buildSchedule(true);
+      const scheduledIds = new Set();
+      let markup = schedule.days.map(day => {
+        const lessonTasks = day.tasks.filter(task => task.type === "lesson");
+        if (!lessonTasks.length) return "";
+        lessonTasks.forEach(task => scheduledIds.add(task.id));
+        return `
+          <div class="nav-day">个性化第 ${day.number} 天</div>
+          ${lessonTasks.map(task => {
+            const lesson = lessons.find(item => item.id === task.id);
+            const number = lessons.indexOf(lesson) + 1;
+            return `<button type="button" class="nav-item ${state.current === lesson.id ? "active" : ""} ${state.completed.includes(lesson.id) ? "done" : ""}" data-lesson="${lesson.id}">
+              <span class="nav-index">${state.completed.includes(lesson.id) ? "✓" : number}</span>
+              <span>${lesson.title}</span>
+              <span class="nav-time">${task.minutes}m</span>
+            </button>`;
+          }).join("")}`;
+      }).join("");
+
+      const skipped = lessons.filter(lesson => recommendedIds.includes(lesson.id) && isLessonKnown(lesson));
+      if (skipped.length) {
+        markup += `<div class="nav-day">已掌握并跳过</div>` + skipped.map(lesson => `
+          <button type="button" class="nav-item skipped ${state.current === lesson.id ? "active" : ""}" data-lesson="${lesson.id}">
+            <span class="nav-index">↷</span>
+            <span>${lesson.title}</span>
+            <span class="nav-time">已知</span>
+          </button>`).join("");
+      }
+
+      const optional = lessons.filter(lesson => !recommendedIds.includes(lesson.id));
+      if (optional.length) {
+        markup += `<div class="nav-day">目标外选修</div>` + optional.map(lesson => `
+          <button type="button" class="nav-item ${state.current === lesson.id ? "active" : ""} ${state.completed.includes(lesson.id) ? "done" : ""}" data-lesson="${lesson.id}">
+            <span class="nav-index">${state.completed.includes(lesson.id) ? "✓" : "+"}</span>
+            <span>${lesson.title}</span>
+            <span class="nav-time">选修</span>
+          </button>`).join("");
+      }
+
+      nav.innerHTML = markup;
+      nav.querySelectorAll("[data-lesson]").forEach(btn => {
+        btn.addEventListener("click", () => showLesson(btn.dataset.lesson));
+      });
+    }
+
+    function updateProgress() {
+      const answered = Object.keys(state.answers).length;
+      const correct = Object.values(state.answers).filter(Boolean).length;
+      const recommended = getRecommendedLessons();
+      const resolvedCount = recommended.filter(lesson =>
+        state.completed.includes(lesson.id) || isLessonKnown(lesson)
+      ).length;
+      const lessonPart = recommended.length ? resolvedCount / recommended.length * 70 : 0;
+      const quizPart = answered ? (correct / 27) * 30 : 0;
+      const mastery = Math.min(100, Math.round(lessonPart + quizPart));
+      const skippedCount = recommended.filter(isLessonKnown).length;
+      document.getElementById("masteryNumber").textContent = mastery + "%";
+      document.getElementById("masteryBar").style.width = mastery + "%";
+      document.getElementById("completedText").textContent =
+        `${resolvedCount} / ${recommended.length} 课${skippedCount ? ` · 跳过 ${skippedCount}` : ""}`;
+      document.getElementById("wrongText").textContent = `${state.wrong.length} 道错题`;
+    }
+
+    function formatMinutes(minutes) {
+      const hours = Math.floor(minutes / 60);
+      const rest = minutes % 60;
+      if (!hours) return `${rest} 分钟`;
+      return rest ? `${hours} 小时 ${rest} 分钟` : `${hours} 小时`;
+    }
+
+    function renderPlanMarkup(schedule) {
+      return schedule.days.map(day => `
+        <div class="plan-day">
+          <div class="plan-day-head">
+            <strong>第 ${day.number} 天</strong>
+            <span class="tag">${formatMinutes(day.minutes)}</span>
+          </div>
+          ${day.tasks.length ? day.tasks.map(task => `
+            <div class="plan-task">
+              <strong>${task.type === "lesson"
+                ? `<button class="btn btn-soft" style="padding:5px 9px;text-align:left" data-plan-lesson="${task.id}">${task.title}</button>`
+                : task.title}</strong>
+              <span>${task.minutes} 分钟</span>
+            </div>`).join("") : `
+            <div class="plan-task"><strong>机动复习或休息</strong><span>按薄弱项补充</span></div>`}
+        </div>`).join("") + (schedule.overloaded ? `
+          <div class="plan-alert">
+            当前任务约 ${formatMinutes(schedule.totalMinutes)}，超过你设置的总时间
+            ${formatMinutes(schedule.totalCapacity)}。建议增加每天时长、增加天数，或勾选已经掌握的知识点。
+          </div>` : "");
+    }
+
+    function showHome(focusSettings = false) {
+      state.current = "home";
+      saveState();
+      const profile = getTargetProfile();
+      const schedule = buildSchedule(false);
+      const nextLesson = getNextLesson();
+      document.getElementById("topTitle").textContent = "按你的时间与目标安排复习";
+      content.innerHTML = `
+        <section class="hero">
+          <div class="eyebrow">当前目标：${profile.label}</div>
+          <h2>${state.profile.days} 天个性化复习，不把时间浪费在已经会的内容上</h2>
+          <p>${profile.description} 系统会按每天 ${state.profile.hoursPerDay} 小时分配任务；勾选已掌握知识点后，计划会立即缩短并重新排课。</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" id="startBtn">${nextLesson ? (state.completed.length ? "继续个性化学习" : "开始推荐课程") : "推荐课程已完成"}</button>
+            <button class="btn btn-outline" id="editProfileBtn">调整目标与时间</button>
+            <button class="btn btn-outline" id="homeMockBtn">查看模拟挑战</button>
+          </div>
+        </section>
+
+        <div class="stats">
+          <div class="stat"><strong>${state.profile.target}</strong><span>目标分数</span></div>
+          <div class="stat"><strong>${state.profile.days} 天</strong><span>准备时间</span></div>
+          <div class="stat"><strong>${state.profile.hoursPerDay} 小时</strong><span>每天可投入</span></div>
+          <div class="stat"><strong>${formatMinutes(schedule.totalMinutes)}</strong><span>当前剩余任务</span></div>
+        </div>
+
+        <section class="panel" id="profilePanel">
+          <div class="section-title">
+            <div>
+              <span class="eyebrow" style="color:var(--blue)">个性化设置</span>
+              <h2>你有多少时间，想考多少分？</h2>
+              <p>修改后会重新选择推荐课程和每天任务，但不会清除已完成课程、错题或练习代码。</p>
+            </div>
+          </div>
+          <div class="setup-grid">
+            <div class="setup-field">
+              <label for="daysInput">剩余复习天数</label>
+              <select id="daysInput">
+                ${[1,2,3,4,5,6,7].map(day => `<option value="${day}" ${Number(state.profile.days) === day ? "selected" : ""}>${day} 天</option>`).join("")}
+              </select>
+              <small>支持短期冲刺，也支持一周复习。</small>
+            </div>
+            <div class="setup-field">
+              <label for="hoursInput">每天学习时间</label>
+              <select id="hoursInput">
+                ${[2,3,4,5,6,7,8].map(hour => `<option value="${hour}" ${Number(state.profile.hoursPerDay) === hour ? "selected" : ""}>${hour} 小时</option>`).join("")}
+              </select>
+              <small>计划会保留休息和订正空间。</small>
+            </div>
+            <div class="setup-field">
+              <label for="targetInput">目标分数</label>
+              <select id="targetInput">
+                ${[60,70,80,90].map(score => `<option value="${score}" ${Number(state.profile.target) === score ? "selected" : ""}>${targetProfiles[score].label}</option>`).join("")}
+              </select>
+              <small>目标越高，综合题和模拟强度越大。</small>
+            </div>
+          </div>
+          <div class="profile-summary">
+            <span class="tag">60 分：基础保底</span>
+            <span class="tag">70 分：高频全覆盖</span>
+            <span class="tag">80 分：全部知识模块</span>
+            <span class="tag">90 分：二次模拟与完整表达</span>
+          </div>
+          <div style="margin-top:16px">
+            <button class="btn btn-blue" id="saveProfileBtn">生成我的复习方案</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <span class="eyebrow" style="color:var(--green)">动态安排</span>
+              <h2>你的剩余复习流程</h2>
+              <p>总容量 ${formatMinutes(schedule.totalCapacity)}，当前计划 ${formatMinutes(schedule.totalMinutes)}。已完成或整课已掌握的内容不会重复安排。</p>
+            </div>
+          </div>
+          ${renderPlanMarkup(schedule)}
+          <div class="method">
+            <strong>计划会自动变化</strong>
+            <p>进入课程后，每个知识点都可勾选“我已掌握”。被勾选的讲解会收起、预计时间会减少；一课全部勾选后，该课将自动跳过。</p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>每节推荐课仍然按照四步学习</h2>
+          <div class="goal-grid">
+            <div class="goal"><strong>1. 筛选已知内容</strong><span>先勾选已经掌握的知识点，不重复消耗时间。</span></div>
+            <div class="goal"><strong>2. 理解与例题</strong><span>只学习剩余知识点，并逐行分析典型题。</span></div>
+            <div class="goal"><strong>3. 即时测验</strong><span>用三道题确认是否真的掌握。</span></div>
+            <div class="goal"><strong>4. 自己写代码</strong><span>按考试得分点自检，再对照参考答案。</span></div>
+          </div>
+        </section>
+      `;
+      document.getElementById("startBtn").onclick = () => {
+        const next = getNextLesson();
+        if (next) showLesson(next.id);
+        else showMock();
+      };
+      document.getElementById("editProfileBtn").onclick = () =>
+        document.getElementById("profilePanel").scrollIntoView({ behavior: "smooth" });
+      document.getElementById("saveProfileBtn").onclick = () => {
+        state.profile = {
+          configured: true,
+          days: Number(document.getElementById("daysInput").value),
+          hoursPerDay: Number(document.getElementById("hoursInput").value),
+          target: Number(document.getElementById("targetInput").value)
+        };
+        saveState();
+        showHome();
+      };
+      document.getElementById("homeMockBtn").onclick = showMock;
+      document.querySelectorAll("[data-plan-lesson]").forEach(button => {
+        button.onclick = () => showLesson(button.dataset.planLesson);
+      });
+      if (focusSettings || !state.profile.configured) {
+        setTimeout(() => document.getElementById("profilePanel").scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+      } else {
+        window.scrollTo({ top: 0 });
+      }
+    }
+
+    function showLesson(id) {
+      const lesson = lessons.find(item => item.id === id);
+      if (!lesson) return;
+      state.current = id;
+      saveState();
+      sidebar.classList.remove("open");
+      document.getElementById("topTitle").textContent = lesson.title;
+      const lessonIndex = lessons.indexOf(lesson);
+      const recommendedLessons = getRecommendedLessons();
+      const recommendedIndex = recommendedLessons.findIndex(item => item.id === id);
+      const isRecommended = recommendedIndex >= 0;
+      const knownCount = lesson.concepts.filter((_, index) => isConceptKnown(id, index)).length;
+      const allKnown = isLessonKnown(lesson);
+      const savedCode = state.code[id] || lesson.practice.starter;
+
+      content.innerHTML = `
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <span class="eyebrow" style="color:var(--blue)">${isRecommended ? `${getTargetProfile().label}推荐课程` : "目标外选修课程"}</span>
+              <h2>${lessonIndex + 1}. ${lesson.title}</h2>
+              <p>${lesson.intro}</p>
+            </div>
+            <span class="tag" id="lessonTimeTag">${lesson.weight} · ${allKnown ? "已跳过" : `约 ${estimatedLessonMinutes(lesson)} 分钟`}</span>
+          </div>
+          <div class="method" id="knownSummary">
+            <strong>知识筛选：已掌握 ${knownCount} / ${lesson.concepts.length} 个</strong>
+            <p>${allKnown ? "本课所有知识点都标记为已掌握，已从个性化时间表中移除。你仍可取消勾选重新学习。" : "先在下一部分勾选已经掌握的知识点，系统会减少本课预计时间。"}</p>
+          </div>
+          <div class="goal-grid">
+            ${lesson.goals.map(goal => `<div class="goal"><strong>${goal[0]}</strong><span>${goal[1]}</span></div>`).join("")}
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <h2>第一步：筛选并理解知识点</h2>
+              <p>已会的内容直接勾选跳过；不确定就先保留，学完例题后再判断。</p>
+            </div>
+            <button class="btn btn-outline" id="skipLessonBtn">${allKnown ? "取消整课跳过" : "本课全部已掌握"}</button>
+          </div>
+          <div class="concept-grid">
+            ${lesson.concepts.map((concept, index) => {
+              const known = isConceptKnown(id, index);
+              return `<div class="concept ${known ? "known" : ""}" data-concept-card="${index}">
+                <strong>${concept[0]}</strong>
+                <span class="concept-detail">${concept[1]}</span>
+                <span class="known-note">已掌握，此知识点讲解已跳过。</span>
+                <label class="concept-check">
+                  <input type="checkbox" data-concept-check="${index}" ${known ? "checked" : ""}>
+                  <span>我已掌握，跳过这个知识点</span>
+                </label>
+              </div>`;
+            }).join("")}
+          </div>
+          <div class="method"><strong>${lesson.method[0]}</strong><p>${lesson.method[1]}</p></div>
+        </section>
+
+        <section class="panel">
+          <h2>第二步：跟着例题分析</h2>
+          <h3>${lesson.exampleTitle}</h3>
+          <pre><code>${escapeHtml(lesson.example)}</code></pre>
+          <ol class="steps">${lesson.steps.map(step => `<li>${step}</li>`).join("")}</ol>
+        </section>
+
+        <section class="panel">
+          <h2>第三步：即时测验</h2>
+          <p style="color:var(--muted)">每题作答后立即显示解析。答错的题自动进入错题本。</p>
+          <div id="quizArea">
+            ${lesson.quiz.map((question, index) => renderQuestion(question, index + 1)).join("")}
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>第四步：自己写</h2>
+          <h3>${lesson.practice.title}</h3>
+          <p>${lesson.practice.prompt}</p>
+          <textarea id="codeEditor" spellcheck="false">${escapeHtml(savedCode)}</textarea>
+          <div class="editor-actions">
+            <button class="btn btn-blue" id="checkCodeBtn">按得分点自检</button>
+            <button class="btn btn-soft" id="solutionBtn">查看参考答案</button>
+            <button class="btn btn-outline" id="resetCodeBtn">恢复题目代码</button>
+          </div>
+          <div class="code-result" id="codeResult"></div>
+          <div class="solution" id="solution">
+            <h3>参考答案</h3>
+            <pre><code>${escapeHtml(lesson.practice.solution)}</code></pre>
+            <p style="color:var(--muted)">不要逐字背诵。请比较：类结构、构造函数、关键函数签名和 main 测试是否齐全。</p>
+          </div>
+        </section>
+
+        ${renderRelatedExamples(lesson)}
+
+        <section class="panel">
+          <div class="lesson-actions">
+            <button class="btn btn-outline" id="prevBtn">${recommendedIndex > 0 ? "上一节推荐课" : "返回计划首页"}</button>
+            <button class="btn btn-primary" id="completeBtn">${state.completed.includes(id) ? "已完成，进入下一项" : "标记完成并进入下一项"}</button>
+          </div>
+        </section>
+      `;
+
+      const refreshKnowledgeStatus = () => {
+        const currentKnown = lesson.concepts.filter((_, index) => isConceptKnown(id, index)).length;
+        const currentAllKnown = isLessonKnown(lesson);
+        const summary = document.getElementById("knownSummary");
+        summary.innerHTML = `<strong>知识筛选：已掌握 ${currentKnown} / ${lesson.concepts.length} 个</strong>
+          <p>${currentAllKnown ? "本课所有知识点都标记为已掌握，已从个性化时间表中移除。你仍可取消勾选重新学习。" : "先勾选已经掌握的知识点，系统会自动减少本课预计时间。"}</p>`;
+        document.getElementById("lessonTimeTag").textContent =
+          `${lesson.weight} · ${currentAllKnown ? "已跳过" : `约 ${estimatedLessonMinutes(lesson)} 分钟`}`;
+        document.getElementById("skipLessonBtn").textContent = currentAllKnown ? "取消整课跳过" : "本课全部已掌握";
+      };
+
+      document.querySelectorAll("[data-concept-check]").forEach(checkbox => {
+        checkbox.addEventListener("change", () => {
+          const index = Number(checkbox.dataset.conceptCheck);
+          const key = conceptKey(id, index);
+          if (checkbox.checked) state.knownConcepts[key] = true;
+          else delete state.knownConcepts[key];
+          document.querySelector(`[data-concept-card="${index}"]`).classList.toggle("known", checkbox.checked);
+          saveState();
+          refreshKnowledgeStatus();
+        });
+      });
+      document.getElementById("skipLessonBtn").onclick = () => {
+        const shouldMarkKnown = !isLessonKnown(lesson);
+        lesson.concepts.forEach((_, index) => {
+          const key = conceptKey(id, index);
+          if (shouldMarkKnown) state.knownConcepts[key] = true;
+          else delete state.knownConcepts[key];
+        });
+        saveState();
+        showLesson(id);
+      };
+      wireQuestions(lesson.quiz);
+      const editor = document.getElementById("codeEditor");
+      editor.addEventListener("input", () => {
+        state.code[id] = editor.value;
+        saveState();
+      });
+      document.getElementById("checkCodeBtn").onclick = () => checkCode(lesson);
+      document.getElementById("solutionBtn").onclick = () => document.getElementById("solution").classList.toggle("show");
+      const openBankButton = document.getElementById("openBankFromLesson");
+      if (openBankButton) openBankButton.onclick = showExampleBank;
+      document.getElementById("resetCodeBtn").onclick = () => {
+        editor.value = lesson.practice.starter;
+        state.code[id] = editor.value;
+        saveState();
+        document.getElementById("codeResult").classList.remove("show");
+      };
+      document.getElementById("prevBtn").onclick = () =>
+        recommendedIndex > 0 ? showLesson(recommendedLessons[recommendedIndex - 1].id) : showHome();
+      document.getElementById("completeBtn").onclick = () => {
+        if (!state.completed.includes(id)) state.completed.push(id);
+        saveState();
+        const next = getNextLesson(id);
+        if (next) showLesson(next.id);
+        else showMock();
+      };
+      restoreAnsweredQuestions(lesson.quiz);
+      window.scrollTo({ top: 0 });
+    }
+
+    function renderQuestion(question, number, prefix = "") {
+      const key = prefix + question.id;
+      return `<div class="question" data-qid="${key}">
+        <p class="question-title">${number}. ${question.text}</p>
+        ${question.options.map((option, index) => `
+          <label class="option">
+            <input type="radio" name="${key}" value="${index}">
+            <span>${String.fromCharCode(65 + index)}. ${option}</span>
+          </label>`).join("")}
+        <div class="feedback"></div>
+      </div>`;
+    }
+
+    function wireQuestions(questions, prefix = "") {
+      questions.forEach(question => {
+        const key = prefix + question.id;
+        const box = document.querySelector(`[data-qid="${key}"]`);
+        if (!box) return;
+        box.querySelectorAll("input").forEach(input => {
+          input.addEventListener("change", () => answerQuestion(question, Number(input.value), box, key));
+        });
+      });
+    }
+
+    function answerQuestion(question, selected, box, key) {
+      const correct = selected === question.answer;
+      state.answers[key] = correct;
+      if (!correct && !state.wrong.includes(question.id)) state.wrong.push(question.id);
+      if (correct) state.wrong = state.wrong.filter(id => id !== question.id);
+      box.classList.remove("correct", "wrong");
+      box.classList.add("answered", correct ? "correct" : "wrong");
+      box.querySelector(".feedback").innerHTML = `<strong>${correct ? "回答正确" : "回答错误"}</strong>：${question.explain}`;
+      box.querySelectorAll("input").forEach(input => input.disabled = true);
+      saveState();
+    }
+
+    function restoreAnsweredQuestions(questions, prefix = "") {
+      questions.forEach(question => {
+        const key = prefix + question.id;
+        if (!(key in state.answers)) return;
+        const box = document.querySelector(`[data-qid="${key}"]`);
+        if (!box) return;
+        const correct = state.answers[key];
+        box.classList.add("answered", correct ? "correct" : "wrong");
+        box.querySelector(".feedback").innerHTML = `<strong>${correct ? "上次回答正确" : "上次回答错误"}</strong>：${question.explain}`;
+        box.querySelectorAll("input").forEach(input => input.disabled = true);
+      });
+    }
+
+    function checkCode(lesson) {
+      const value = document.getElementById("codeEditor").value.toLowerCase().replace(/\s+/g, " ");
+      const checks = lesson.practice.keywords.map(keyword => ({
+        keyword,
+        found: value.includes(keyword.toLowerCase().replace(/\s+/g, " "))
+      }));
+      const found = checks.filter(item => item.found).length;
+      const percent = Math.round(found / checks.length * 100);
+      const result = document.getElementById("codeResult");
+      result.innerHTML = `
+        <strong>结构自检：${found}/${checks.length} 个关键点，约 ${percent}%</strong>
+        <div class="rubric-grid" style="margin-top:10px">
+          ${checks.map(item => `<div class="rubric-item">${item.found ? "✓" : "○"} <code>${escapeHtml(item.keyword)}</code></div>`).join("")}
+        </div>
+        <p style="margin-bottom:0;color:var(--muted)">这是结构检查，不是编译器。仍需对照参考答案检查语法、分号、括号和函数返回值。</p>`;
+      result.classList.add("show");
+    }
+
+    function renderExampleCard(example) {
+      return `<article class="example-card" data-example-id="${example.id}">
+        <div class="example-meta">
+          <span class="tag">${example.category}</span>
+          <span class="tag">${example.difficulty}</span>
+          <span class="tag">${example.points} 分参考题</span>
+        </div>
+        <h3>${example.title}</h3>
+        <p>${example.prompt}</p>
+        <div class="example-meta">
+          ${example.focus.map(item => `<code>${item}</code>`).join("")}
+        </div>
+        <details>
+          <summary>查看分析步骤与得分点</summary>
+          <ol class="steps">
+            ${example.outline.map(step => `<li>${step}</li>`).join("")}
+          </ol>
+        </details>
+      </article>`;
+    }
+
+    function renderRelatedExamples(lesson) {
+      const related = exampleBank
+        .filter(example => example.lessons.includes(lesson.id))
+        .slice(0, 4);
+      if (!related.length) return "";
+      return `<section class="panel">
+        <div class="section-title">
+          <div>
+            <span class="eyebrow" style="color:var(--green)">来自补充资料</span>
+            <h2>本知识点扩展例题</h2>
+            <p>先完成本课练习，再从下面选择一道迁移题。展开后只看思路和得分点，不直接替代独立编码。</p>
+          </div>
+          <button class="btn btn-outline" id="openBankFromLesson">查看完整题库</button>
+        </div>
+        <div class="example-bank-grid">${related.map(renderExampleCard).join("")}</div>
+      </section>`;
+    }
+
+    function showExampleBank() {
+      state.current = "bank";
+      saveState();
+      sidebar.classList.remove("open");
+      document.getElementById("topTitle").textContent = "扩展例题库";
+      const categories = [...new Set(exampleBank.map(example => example.category))];
+      const difficulties = [...new Set(exampleBank.map(example => example.difficulty))];
+      content.innerHTML = `
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <span class="eyebrow" style="color:var(--blue)">依据新增 DOC 资料整理</span>
+              <h2>扩展例题库</h2>
+              <p>题目已按知识点、难度和参考分值整理。这里提供拆题方向与得分点，不承诺与正式考试原题或范围一致。</p>
+            </div>
+            <span class="tag">${exampleBank.length} 道</span>
+          </div>
+          <div class="bank-controls">
+            <input id="bankSearch" type="search" placeholder="搜索题目、知识点或关键词">
+            <select id="bankCategory">
+              <option value="">全部类别</option>
+              ${categories.map(category => `<option value="${category}">${category}</option>`).join("")}
+            </select>
+            <select id="bankDifficulty">
+              <option value="">全部难度</option>
+              ${difficulties.map(difficulty => `<option value="${difficulty}">${difficulty}</option>`).join("")}
+            </select>
+          </div>
+          <div class="example-bank-grid" id="exampleBankGrid"></div>
+          <div class="empty hidden" id="bankEmpty">没有匹配的题目，请减少筛选条件。</div>
+        </section>`;
+
+      const renderFilteredBank = () => {
+        const query = document.getElementById("bankSearch").value.trim().toLowerCase();
+        const category = document.getElementById("bankCategory").value;
+        const difficulty = document.getElementById("bankDifficulty").value;
+        const filtered = exampleBank.filter(example => {
+          const text = [
+            example.title,
+            example.prompt,
+            example.category,
+            example.difficulty,
+            ...example.focus,
+            ...example.outline
+          ].join(" ").toLowerCase();
+          return (!query || text.includes(query)) &&
+            (!category || example.category === category) &&
+            (!difficulty || example.difficulty === difficulty);
+        });
+        document.getElementById("exampleBankGrid").innerHTML = filtered.map(renderExampleCard).join("");
+        document.getElementById("bankEmpty").classList.toggle("hidden", filtered.length > 0);
+      };
+
+      ["bankSearch", "bankCategory", "bankDifficulty"].forEach(id => {
+        document.getElementById(id).addEventListener("input", renderFilteredBank);
+        document.getElementById(id).addEventListener("change", renderFilteredBank);
+      });
+      renderFilteredBank();
+      window.scrollTo({ top: 0 });
+    }
+
+    function showWrongBook() {
+      state.current = "wrong";
+      saveState();
+      sidebar.classList.remove("open");
+      document.getElementById("topTitle").textContent = "错题补练";
+      const wrongQuestions = lessons.flatMap(l => l.quiz).filter(q => state.wrong.includes(q.id));
+      content.innerHTML = `
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <span class="eyebrow" style="color:var(--red)">错误是最值钱的复习材料</span>
+              <h2>错题补练</h2>
+              <p>重新答对后，题目会自动从错题本移除。</p>
+            </div>
+            <span class="tag">${wrongQuestions.length} 道</span>
+          </div>
+          ${wrongQuestions.length ? wrongQuestions.map((q, i) => renderQuestion(q, i + 1, "retry-")).join("") : `
+            <div class="empty">目前没有错题。继续完成课程测验，答错的题会自动出现在这里。</div>`}
+        </section>
+      `;
+      if (wrongQuestions.length) {
+        wireQuestions(wrongQuestions, "retry-");
+      }
+      window.scrollTo({ top: 0 });
+    }
+
+    function showMock() {
+      state.current = "mock";
+      saveState();
+      sidebar.classList.remove("open");
+      document.getElementById("topTitle").textContent = `${state.profile.target} 分模拟挑战`;
+      content.innerHTML = `
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <span class="eyebrow" style="color:var(--blue)">建议安排在计划的最后一天</span>
+              <h2>${state.profile.target} 分目标模拟挑战</h2>
+              <p>客观题 45 分自动计分，四道编程题按得分点诚实自评，共 55 分。结果会按照你的个人目标判断。</p>
+            </div>
+          </div>
+          <div class="mock-head">
+            <div>
+              <strong>当前模拟成绩</strong>
+              <div style="color:#cbd5eb">目标线：${state.profile.target} / 100</div>
+            </div>
+            <div class="mock-score"><span id="mockScore">0</span> 分</div>
+          </div>
+          <p class="exam-warning">本轮建议限时 ${getTargetProfile().mockMinutes} 分钟。先独立作答，再勾选你真正完成的编程得分点；目标越高，越要完成全部四道编程题。</p>
+        </section>
+
+        <section class="panel">
+          <h2>第一部分：读程序与改错核心判断（45 分）</h2>
+          ${mockQuestions.map((q, i) => `
+            <div class="question" data-mock="${i}">
+              <p class="question-title">${i + 1}. ${q[0]} <span class="tag">${q[3]} 分</span></p>
+              ${q[1].map((option, optionIndex) => `
+                <label class="option">
+                  <input type="radio" name="mock-${i}" value="${optionIndex}" ${state.mockAnswers[i] === optionIndex ? "checked" : ""}>
+                  <span>${String.fromCharCode(65 + optionIndex)}. ${option}</span>
+                </label>`).join("")}
+            </div>`).join("")}
+        </section>
+
+        <section class="panel">
+          <h2>第二部分：编程题自评（55 分）</h2>
+          <p style="color:var(--muted)">必须在纸上或代码练习区真正写出后才能勾选。每个得分点按题目给出的分值平均计算。</p>
+          ${mockCoding.map((item, i) => `
+            <div class="question">
+              <p class="question-title">${i + 1}. ${item.title}（${item.max} 分）</p>
+              ${item.checks.map((check, j) => `
+                <label class="option">
+                  <input type="checkbox" data-coding="${i}-${j}" ${state.mockCoding[`${i}-${j}`] ? "checked" : ""}>
+                  <span>${check}</span>
+                </label>`).join("")}
+            </div>`).join("")}
+        </section>
+
+        <section class="panel">
+          <div class="lesson-actions">
+            <button class="btn btn-outline" id="reviewWrongMock">查看薄弱知识</button>
+            <button class="btn btn-primary" id="calculateMock">计算最终成绩</button>
+          </div>
+          <div class="code-result" id="mockResult"></div>
+        </section>
+      `;
+
+      document.querySelectorAll("[data-mock]").forEach(box => {
+        box.querySelectorAll("input").forEach(input => {
+          input.addEventListener("change", () => {
+            state.mockAnswers[box.dataset.mock] = Number(input.value);
+            saveState();
+            updateMockScore();
+          });
+        });
+      });
+      document.querySelectorAll("[data-coding]").forEach(input => {
+        input.addEventListener("change", () => {
+          state.mockCoding[input.dataset.coding] = input.checked;
+          saveState();
+          updateMockScore();
+        });
+      });
+      document.getElementById("calculateMock").onclick = showMockResult;
+      document.getElementById("reviewWrongMock").onclick = () => {
+        const firstIncomplete = getNextLesson();
+        if (firstIncomplete) showLesson(firstIncomplete.id);
+        else showWrongBook();
+      };
+      updateMockScore();
+      window.scrollTo({ top: 0 });
+    }
+
+    function calculateMockScore() {
+      let objective = 0;
+      mockQuestions.forEach((q, i) => {
+        if (state.mockAnswers[i] === q[2]) objective += q[3];
+      });
+      let coding = 0;
+      mockCoding.forEach((item, i) => {
+        const each = item.max / item.checks.length;
+        item.checks.forEach((_, j) => {
+          if (state.mockCoding[`${i}-${j}`]) coding += each;
+        });
+      });
+      return { objective, coding: Math.round(coding), total: Math.round(objective + coding) };
+    }
+
+    function updateMockScore() {
+      const score = calculateMockScore();
+      const target = document.getElementById("mockScore");
+      if (target) target.textContent = score.total;
+    }
+
+    function showMockResult() {
+      const score = calculateMockScore();
+      const result = document.getElementById("mockResult");
+      const reached = score.total >= state.profile.target;
+      const message = reached
+        ? `已经达到 ${state.profile.target} 分目标。接下来优先清空错题，并再手写一次最薄弱的编程题。`
+        : `距离目标还差 ${state.profile.target - score.total} 分。先补客观题规则，再练推荐计划中尚未完成的编程模块。`;
+      result.innerHTML = `<strong>${reached ? "达到目标" : "需要补强"}：${score.total} / 100</strong>
+        <p>客观题：${score.objective} / 45；编程题自评：${score.coding} / 55。</p>
+        <p style="margin-bottom:0">${message}</p>`;
+      result.classList.add("show");
+    }
+
+    function updateCountdown() {
+      const exam = new Date("2026-06-18T14:00:00+08:00");
+      const diff = exam - new Date();
+      const node = document.getElementById("countdown");
+      if (diff <= 0) {
+        node.textContent = "考试时间：2026 年 6 月 18 日下午";
+        return;
+      }
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      node.textContent = `距离考试约 ${days} 天 ${hours} 小时`;
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const studentId = document.getElementById("studentIdInput").value.trim();
+      const consent = document.getElementById("consentInput").checked;
+      const errorNode = document.getElementById("loginError");
+      errorNode.textContent = "";
+      if (!/^\d{4,20}$/.test(studentId)) {
+        errorNode.textContent = "请输入 4–20 位数字学号。";
+        return;
+      }
+      if (!consent) {
+        errorNode.textContent = "请先阅读并确认学习参考声明。";
+        return;
+      }
+      try {
+        await activateStudent(studentId);
+        completeLogin(studentId);
+      } catch (error) {
+        errorNode.textContent = error.message || "登录失败，请检查服务状态。";
+      }
+    });
+
+    document.getElementById("settingsBtn").onclick = () => showHome(true);
+    document.getElementById("bankBtn").onclick = showExampleBank;
+    document.getElementById("wrongBookBtn").onclick = showWrongBook;
+    document.getElementById("mockBtn").onclick = showMock;
+    document.getElementById("menuBtn").onclick = () => sidebar.classList.toggle("open");
+    document.getElementById("resetBtn").onclick = () => {
+      if (confirm("确定清空全部课程、答题和代码练习进度吗？")) {
+        state = {
+          ...defaultState,
+          profile: { ...defaultState.profile },
+          completed: [],
+          knownConcepts: {},
+          answers: {},
+          wrong: [],
+          code: {},
+          mockAnswers: {},
+          mockCoding: {}
+        };
+        saveState();
+        showHome(true);
+      }
+    };
+
+    setInterval(updateCountdown, 60000);
+    initializeLogin();
+  </script>
+</body>
+</html>
