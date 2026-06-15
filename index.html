@@ -342,6 +342,50 @@
     .concept { transition: opacity .2s ease, background .2s ease; }
     .concept.known { background: #f0f1f3; opacity: .72; }
     .concept.known .concept-detail { display: none; }
+    .concept-grid.detailed { grid-template-columns: 1fr; }
+    .concept.detailed-card { padding: 20px; }
+    .concept-explanation {
+      margin: 12px 0;
+      padding: 13px 15px;
+      border-left: 4px solid var(--blue);
+      border-radius: 0 10px 10px 0;
+      background: #f6f8ff;
+      color: #33415f;
+    }
+    .concept-sections {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .concept-section {
+      padding: 12px 14px;
+      border: 1px solid #e3e6ed;
+      border-radius: 11px;
+      background: #fff;
+    }
+    .concept-section strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--ink);
+    }
+    .concept-section p { margin: 0; color: var(--muted); font-size: 14px; }
+    .concept-code {
+      overflow-x: auto;
+      margin: 12px 0 0;
+      padding: 13px;
+      border-radius: 10px;
+      color: #e9eefc;
+      background: #11192b;
+      font: 13px/1.6 Consolas, monospace;
+      white-space: pre;
+    }
+    .concept-more summary {
+      margin-top: 10px;
+      color: var(--blue);
+      font-weight: 800;
+      cursor: pointer;
+    }
     .known-note { display: none; color: var(--green); font-size: 14px; font-weight: 700; }
     .concept.known .known-note { display: block; }
     .concept-check {
@@ -693,7 +737,7 @@
       main { padding-left: 14px; padding-right: 14px; }
       .topbar { align-items: flex-start; }
       .countdown { display: none; }
-      .stats, .goal-grid, .concept-grid, .rubric-grid, .setup-grid, .bank-controls, .target-path { grid-template-columns: 1fr; }
+      .stats, .goal-grid, .concept-grid, .rubric-grid, .setup-grid, .bank-controls, .target-path, .concept-sections { grid-template-columns: 1fr; }
       .hero-actions, .lesson-actions { flex-direction: column; }
       .btn { width: 100%; }
       .section-title { display: block; }
@@ -791,7 +835,8 @@
           ["类与对象", "类描述<b>属性和行为</b>；对象是类的一个实例。"],
           ["public", "类内、派生类、类外对象都可按规则访问。"],
           ["protected", "类内和派生类可访问，普通对象不能直接访问。"],
-          ["private", "只有本类成员和友元可以直接访问，类外对象不行。"]
+          ["private", "只有本类成员和友元可以直接访问，类外对象不行。"],
+          ["对象指针与 ->", "普通对象用 <b>.</b>，指向对象的指针用 <b>-></b> 访问成员。"]
         ],
         method: ["判断访问权限的三步法", "先看“谁在访问”，再看成员的权限，最后看是否存在继承关系。不要只盯着 public/private 单词猜答案。"],
         exampleTitle: "例题：为什么这段代码编译错误？",
@@ -2678,6 +2723,417 @@ public:
       }
     };
 
+    const conceptDetails = {
+      "类与对象": {
+        explain: "类可以理解为一种由程序员定义的新数据类型。它把数据（属性）和操作这些数据的函数（行为）放在一起。类本身只是设计说明，真正占用对象存储空间的是按照这个类创建出来的对象。",
+        code: `class Student {
+public:
+    string name;
+    void study() { cout << name << " is studying"; }
+};
+
+Student a;        // a 是对象
+a.name = "Li";    // 访问对象的数据成员
+a.study();        // 调用对象的成员函数`,
+        mistake: "把类名和对象名混为一谈，或者定义了类却没有在 main 中创建对象。还要注意：非 static 数据成员通常每个对象各有一份。",
+        exam: "题目要求“设计一个类”时，至少检查：类名、访问权限、数据成员、构造函数、功能成员函数和 main 测试是否完整。"
+      },
+      "public": {
+        explain: "public 表示类对外公开的接口。类外代码可以通过对象、对象引用或对象指针访问 public 成员。实际设计中通常把需要用户调用的函数设为 public，而不是把所有数据都公开。",
+        code: `class Account {
+public:
+    void deposit(double n) { balance += n; }
+private:
+    double balance = 0;
+};
+
+Account a;
+a.deposit(100);   // 正确：deposit 是 public`,
+        mistake: "误以为 public 数据更方便就把所有成员都公开。这样外部代码能绕过检查随意修改数据，容易破坏对象状态。",
+        exam: "看到 obj.member，先检查 member 是否为 public；如果它是函数，还要继续检查参数数量和类型。"
+      },
+      "protected": {
+        explain: "protected 主要服务于继承。它允许本类成员和派生类成员直接访问，但类外普通代码仍不能通过对象直接访问。可以把它理解为“对子类开放，对普通用户隐藏”。",
+        code: `class Base {
+protected:
+    int value = 0;
+};
+class Derived : public Base {
+public:
+    void set(int x) { value = x; } // 正确
+};
+
+Derived d;
+// d.value = 3;                    // 错误`,
+        mistake: "认为派生类对象能在 main 中直接访问 protected。访问者是 main，而不是派生类成员函数，所以仍然不允许。",
+        exam: "写改错原因时要指出“类外普通对象访问 protected”，不能只写“权限不对”。"
+      },
+      "private": {
+        explain: "private 用来保护类的内部实现。本类的所有非 static 成员函数都可以访问本类任意对象的 private 成员，但类外普通代码不能直接访问。通常通过 public 的 getter、setter 或业务函数间接操作。",
+        code: `class Student {
+private:
+    int score;
+public:
+    Student(int s) : score(s) {}
+    int getScore() const { return score; }
+};
+
+Student s(90);
+cout << s.getScore(); // 正确
+// cout << s.score;    // 错误`,
+        mistake: "误以为 private 连构造函数或本类成员函数也不能访问。private 限制的是类外访问，不限制本类自己的成员函数。",
+        exam: "标准答案写法：错误在 s.score；score 是 private，类外不能直接访问；应提供 public 成员函数读取。"
+      },
+      "对象指针与 ->": {
+        explain: "对象指针保存某个对象的地址。普通对象使用点号访问成员；指针不是对象本身，因此使用箭头。p->member 完全等价于 (*p).member，括号用于先解引用得到对象。",
+        code: `Student s(90);
+Student* p = &s;
+
+cout << s.getScore();     // 对象使用 .
+cout << p->getScore();    // 指针使用 ->
+cout << (*p).getScore();  // 与上一行等价`,
+        mistake: "常见错误是写 p.member，或把 (*p).member 错写成 *p.member。点号优先级高，因此解引用形式必须有括号。空指针也不能使用 ->。",
+        exam: "记忆：对象用 .，对象指针用 ->。遇到 p->x=5，要知道它修改的是 p 所指对象内部的 x。"
+      },
+      "构造函数": {
+        explain: "构造函数在对象创建时自动执行，负责把对象初始化到可用状态。它与类同名、没有返回类型，可以通过不同参数列表重载。对象数组、成员对象和派生类都会涉及构造函数的自动调用。",
+        code: `class Point {
+    int x, y;
+public:
+    Point() : x(0), y(0) {}
+    Point(int a, int b) : x(a), y(b) {}
+};
+
+Point p1;       // 调用 Point()
+Point p2(3, 4); // 调用 Point(int,int)`,
+        mistake: "写成 void Point() 会变成普通成员函数，不是构造函数。另一个高频错误是只定义带参构造，却又使用 Point p;。",
+        exam: "读程序时看到对象定义就立即标记调用哪个构造函数；编程题优先用初始化列表初始化成员。"
+      },
+      "析构函数": {
+        explain: "析构函数在对象生命周期结束时自动调用，用于清理资源。名字是 ~类名，没有返回类型、没有参数，不能重载。局部对象离开作用域时析构，new 创建的对象在 delete 时析构。",
+        code: `class Buffer {
+    int* data;
+public:
+    Buffer(int n) : data(new int[n]) {}
+    ~Buffer() { delete[] data; }
+};`,
+        mistake: "动态数组使用 new[] 却写 delete；或者通过基类指针删除派生对象时基类析构不是 virtual。",
+        exam: "多个局部对象通常按创建顺序构造、反向析构。继承中先析构派生类部分，再析构基类部分。"
+      },
+      "初始化列表": {
+        explain: "初始化列表发生在进入构造函数体之前，是真正的成员初始化。const 成员、引用成员、没有默认构造的成员对象，以及基类部分都必须通过初始化列表完成初始化。",
+        code: `class Student : public Person {
+    const int id;
+    string name;
+public:
+    Student(int i, string n)
+        : Person(n), id(i), name(n) {}
+};`,
+        mistake: "在函数体里写 id=i 不是初始化，而是赋值；const 成员已经必须在进入函数体前完成初始化。",
+        exam: "派生类基类无无参构造时，正确改法通常是 Derived(int x) : Base(x), member(x) {}。"
+      },
+      "默认构造": {
+        explain: "默认构造函数是能够不提供实参就调用的构造函数，不一定真的零参数，所有参数都有默认值也可以。只要用户声明了某些构造函数，编译器是否自动生成默认构造就要重新判断。",
+        code: `class A {
+public:
+    A(int x = 0) {} // 可作为默认构造调用
+};
+
+A a;       // 正确
+A arr[3];  // 正确`,
+        mistake: "定义 A(int) 后仍认为编译器一定补 A()。这会导致 A a; 或 A arr[10]; 编译失败。",
+        exam: "对象数组没有逐个给初值时，每个元素都需要可用的默认构造函数。"
+      },
+      "静态数据成员": {
+        explain: "静态数据成员属于整个类，而不是某一个对象。无论创建多少对象，大家共享同一份数据，适合统计对象数量、总金额或统一编号。",
+        code: `class Counter {
+public:
+    static int total;
+    Counter() { ++total; }
+};
+int Counter::total = 0;
+
+Counter a, b;
+cout << Counter::total; // 2`,
+        mistake: "忘记类外定义导致链接错误，或者在每个构造函数中把 total 重新置零。",
+        exam: "传统考试写法：类内声明 static，类外使用 类型 类名::成员名=初值 完成定义。"
+      },
+      "静态成员函数": {
+        explain: "静态成员函数属于类，可以不通过具体对象调用。它没有 this 指针，因此不知道当前是哪个对象，不能直接访问普通非静态成员。",
+        code: `class Counter {
+    static int total;
+public:
+    static int getTotal() { return total; }
+};
+
+cout << Counter::getTotal();`,
+        mistake: "在 static 函数中直接访问普通成员 value。除非先取得某个对象，否则它只能直接使用静态成员。",
+        exam: "看到 ClassName::func() 通常是在调用静态成员函数；检查函数内部是否错误使用 this 或非静态成员。"
+      },
+      "拷贝构造": {
+        explain: "拷贝构造在创建新对象时，用同类已有对象作为初值。标准参数通常是 const A&，使用引用避免为了传参再次发生复制，使用 const 允许复制常量对象。",
+        code: `class A {
+public:
+    A(const A& other) { /* 复制成员 */ }
+};
+
+A a;
+A b = a; // b 是新对象，调用拷贝构造
+A c(a);  // 同样调用拷贝构造`,
+        mistake: "把参数写成 A other 会为了传参先复制 other，从而递归调用拷贝构造。资源类只复制指针地址还会产生浅拷贝问题。",
+        exam: "判断关键：左边对象是否正在这一行被创建。是，则属于拷贝构造。"
+      },
+      "赋值运算": {
+        explain: "赋值发生在左右两个对象都已经存在时，目的是用右边对象的状态替换左边对象。默认赋值会逐成员复制；管理动态资源的类通常需要自定义 operator=。",
+        code: `A a;
+A b;
+b = a; // b 早已存在，调用赋值运算符`,
+        mistake: "资源类赋值时没有释放旧资源、没有处理自赋值，或忘记 return *this，可能造成泄漏或无法链式赋值。",
+        exam: "拷贝构造是初始化新对象；赋值是修改旧对象。这句话经常就是解释题得分点。"
+      },
+      "继承": {
+        explain: "继承表示新类在已有类基础上扩展。基类放共同数据和行为，派生类添加自己的特征。派生类对象内部包含一个基类子对象，但继承并不意味着基类所有成员都能被派生类直接访问。",
+        code: `class Person { /* 共同信息 */ };
+class Student : public Person {
+    int score;
+};`,
+        mistake: "只是为了少写几行代码就随意继承。应当满足 Student 是一种 Person 这样的 is-a 关系。",
+        exam: "多类设计先找共同信息放基类，再找不同算法设计虚函数，最后由子类实现。"
+      },
+      "public 继承": {
+        explain: "public 继承保持基类接口的公开程度：基类 public 在派生类中仍为 public，protected 仍为 protected；基类 private 仍不可由派生类直接访问。",
+        code: `class Base {
+public: void f() {}
+protected: int x;
+};
+class Derived : public Base {
+    void g() { f(); x = 1; }
+};`,
+        mistake: "把 public 继承误解为基类 private 也会公开。private 始终只能由基类自身和友元直接访问。",
+        exam: "外部可以通过 Derived 对象调用继承来的 Base public 函数，这是 public 继承最常考的效果。"
+      },
+      "基类 private": {
+        explain: "基类 private 数据确实存在于派生对象的基类部分，但派生类成员不能直接写它。基类应通过 protected/public 成员函数为子类提供受控接口。",
+        code: `class Base {
+    int value;
+protected:
+    void setValue(int x) { value = x; }
+};
+class Derived : public Base {
+    void work() { setValue(3); }
+};`,
+        mistake: "在派生类中直接 value=3，并认为继承后就归派生类所有。",
+        exam: "改错原因要写“value 是 Base 的 private 成员，Derived 成员函数不能直接访问”。"
+      },
+      "初始化顺序": {
+        explain: "创建派生类对象时，先构造基类子对象，再按成员在类中声明的顺序构造成员对象，最后执行派生类构造函数体。析构顺序完全相反。",
+        code: `class D : public B {
+    M first;
+    M second;
+public:
+    D() : second(), first(), B() {}
+};
+// 实际仍是 B -> first -> second -> D函数体`,
+        mistake: "认为初始化列表书写顺序决定成员初始化顺序。成员对象严格按声明顺序初始化。",
+        exam: "读输出题先列固定框架：基类、成员对象、派生类；析构时反着写。"
+      },
+      "虚函数": {
+        explain: "虚函数让通过基类指针或引用进行的调用，根据对象的真实类型选择派生类实现。virtual 写在基类接口上，派生类建议写 override 让编译器检查签名。",
+        code: `class Base {
+public:
+    virtual void show() { cout << "Base"; }
+};
+class Derived : public Base {
+public:
+    void show() override { cout << "Derived"; }
+};`,
+        mistake: "派生函数参数、const 或返回类型不匹配，实际没有正确覆盖。override 可以立即暴露这种错误。",
+        exam: "先看基类是否 virtual，再看是否通过基类指针/引用调用，最后看它实际指向哪种对象。"
+      },
+      "多态": {
+        explain: "多态是同一调用接口面对不同对象产生不同结果。运行时多态需要继承、虚函数覆盖，以及基类指针或引用这三个条件共同成立。",
+        code: `void print(Base& obj) {
+    obj.show();
+}
+Base b;
+Derived d;
+print(b); // Base
+print(d); // Derived`,
+        mistake: "把派生对象按值赋给基类对象会发生对象切片，丢失派生部分，之后不会表现出派生行为。",
+        exam: "题目强调“动态联编”“统一接口”“不同对象不同算法”时，通常要求基类虚函数和多态调用。"
+      },
+      "纯虚函数": {
+        explain: "纯虚函数只规定接口，不提供必须使用的基类实现，形式是 virtual 返回类型 函数(...) = 0。派生类若不实现它，派生类本身也仍然是抽象类。",
+        code: `class Shape {
+public:
+    virtual double area() const = 0;
+    virtual ~Shape() = default;
+};`,
+        mistake: "漏写 virtual、漏写 =0，或派生类实现时签名不一致。",
+        exam: "20 分多类题常把“每种子类算法不同”的函数设计成纯虚函数。"
+      },
+      "抽象类": {
+        explain: "含有至少一个纯虚函数的类是抽象类。它不能直接创建对象，作用是统一保存共同数据并规定派生类必须提供的行为。",
+        code: `Shape s;           // 错误：抽象类对象
+Shape* p = new Circle; // 正确：基类指针指向具体类`,
+        mistake: "直接定义抽象类对象，或者派生类遗漏一个纯虚函数实现却仍尝试创建对象。",
+        exam: "改错题看到 '=0' 后又出现 Base obj;，通常就是直接实例化抽象类的错误。"
+      },
+      "共同信息": {
+        explain: "多类题中，多个子类都拥有且含义相同的数据应放入基类，例如员工号、姓名、基础价格。这样避免重复，并让基类接口能够统一处理不同子类。",
+        code: `class Employee {
+protected:
+    int id;
+    string name;
+public:
+    Employee(int i, string n) : id(i), name(n) {}
+};`,
+        mistake: "每个子类重复写 id 和 name，导致初始化、输出和维护代码重复。",
+        exam: "审题时先用横线标出所有对象共有的名词，把它们作为基类数据候选。"
+      },
+      "变化行为": {
+        explain: "多个子类都要做同一件事，但计算方式不同，这个行为适合成为虚函数。例如所有员工都要计算工资，但不同岗位公式不同。",
+        code: `class Employee {
+public:
+    virtual double calcSalary() const = 0;
+};`,
+        mistake: "在 main 中用大量 if/else 判断岗位类型，而没有利用虚函数把算法交给各子类。",
+        exam: "题目出现“不同类型采用不同计算方式，并使用多态”时，变化算法就是虚函数。"
+      },
+      "Salesman": {
+        explain: "销售员是 Employee 的一种具体派生类。它需要额外保存销售额，calcSalary 覆盖基类接口并按销售额乘提成比例计算。",
+        code: `class Salesman : public Employee {
+    double sales;
+public:
+    double calcSalary() const override {
+        return sales * 0.04;
+    }
+};`,
+        mistake: "把提成 4% 写成乘 4，或函数签名与基类不一致导致没有覆盖。",
+        exam: "子类得分点通常包括：继承关系、特有数据、构造函数初始化、override 和正确公式。"
+      },
+      "Manager": {
+        explain: "经理类同样继承 Employee，但工资规则是固定月薪。它说明多态不要求每个子类都有复杂公式，只要求都通过同一接口返回结果。",
+        code: `class Manager : public Employee {
+public:
+    double calcSalary() const override {
+        return 8000;
+    }
+};`,
+        mistake: "忘记覆盖纯虚函数，使 Manager 仍是抽象类；或者在 main 中直接按类型手算工资。",
+        exam: "最后应通过 Employee* 或 Employee& 调用 calcSalary，才能体现多态，而不只是分别调用子类对象。"
+      },
+      "成员函数版": {
+        explain: "成员函数重载中，左操作数就是当前对象 *this，不需要出现在参数表。因此二元运算符通常只写一个显式参数。",
+        code: `class Point {
+public:
+    Point operator+(const Point& rhs) const {
+        return Point(x + rhs.x, y + rhs.y);
+    }
+};
+Point c = a + b; // 等价于 a.operator+(b)`,
+        mistake: "成员版 operator+ 写两个参数，忘记左操作数已经由 this 提供。",
+        exam: "二元成员运算符：显式参数通常 1 个；一元成员运算符：显式参数通常 0 个。"
+      },
+      "友元函数版": {
+        explain: "友元重载不是成员函数，没有 this，因此左右操作数都要写在参数表。friend 允许它访问类的 private 数据，但它仍然是类外函数。",
+        code: `class Point {
+    friend Point operator+(const Point& a,
+                           const Point& b);
+};`,
+        mistake: "把友元函数当成成员函数调用，或者只写一个参数。",
+        exam: "当左操作数不是本类对象，例如 cout << obj，通常使用友元非成员函数。"
+      },
+      "输出重载": {
+        explain: "operator<< 的左操作数是 ostream 对象 cout，所以通常写成非成员友元函数。返回 ostream& 是为了支持 cout << a << b 这样的连续输出。",
+        code: `friend ostream& operator<<(ostream& out,
+                           const Point& p) {
+    out << "(" << p.x << "," << p.y << ")";
+    return out;
+}`,
+        mistake: "返回 void、把 ostream 按值传递、忘记 return out，或第二个参数没有 const。",
+        exam: "固定签名值得熟练：ostream& operator<<(ostream&, const 类名&)。"
+      },
+      "不可改变规则": {
+        explain: "运算符重载只能改变已有运算符面对自定义类型时的行为，不能创建新符号，不能改变优先级、结合性和操作数数量，也不能改变内置类型之间原本的运算意义。",
+        code: `// 可以重载 +，但不能创造 ** 作为新运算符
+// 不能把二元 + 改成三个操作数`,
+        mistake: "试图重载不存在的符号，或认为重载后表达式优先级也会改变。",
+        exam: "判断题常问“能否改变优先级/操作数个数”，答案都是不能。"
+      },
+      "函数模板": {
+        explain: "函数模板不是一个具体函数，而是生成一组相似函数的规则。编译器根据实参类型推导 T，再生成对应版本，因此同一逻辑可服务 int、double 或满足运算要求的类。",
+        code: `template<typename T>
+T larger(T a, T b) {
+    return a > b ? a : b;
+}`,
+        mistake: "只把返回类型改成 T，却仍把形参写成 int；或传入两种无法统一推导的类型。",
+        exam: "10 分模板题通常要求模板声明、T 形参和返回值、正确逻辑、至少两种类型测试。"
+      },
+      "typename T": {
+        explain: "T 是类型占位符，不是变量。typename 和 class 在模板参数表中大多等价。实例化时 T 会被具体类型替换，但该类型必须支持模板内部使用的操作。",
+        code: `template<typename T>
+T add(T a, T b) { return a + b; }
+
+add(2, 3);       // T 是 int
+add(1.2, 3.4);   // T 是 double`,
+        mistake: "认为 T 只能代表基本类型。自定义类也可以，只要它实现了模板所需要的运算符。",
+        exam: "如果模板内部用了 >，则类型 T 必须能够进行 > 比较，这是隐含要求。"
+      },
+      "类模板": {
+        explain: "类模板把类型参数应用到整个类。它适合容器、数组、栈等结构相同但元素类型不同的类。类外定义成员函数时，需要重复模板声明和 Class<T>:: 作用域。",
+        code: `template<typename T>
+class Box {
+    T value;
+public:
+    Box(T v) : value(v) {}
+    T get() const { return value; }
+};`,
+        mistake: "类外成员定义遗漏 template<typename T>，或把 Box<T>:: 写成 Box::。",
+        exam: "类模板改错题常检查模板前缀、作用域中的 <T> 和实例化时的具体类型。"
+      },
+      "实例化": {
+        explain: "实例化是从模板产生具体函数或具体类的过程。函数模板常可由实参自动推导；类模板在传统考试语境下通常必须明确写出类型参数。",
+        code: `Box<int> a(3);
+Box<double> b(2.5);
+// Box c; // 缺少具体类型，传统写法错误`,
+        mistake: "创建类模板对象时只写 Box b，而没有写 Box<int>。",
+        exam: "看到 template<class T> class Box 后，正确对象形式通常是 Box<具体类型> 对象名。"
+      },
+      "访问错误": {
+        explain: "访问错误的核心不是某个单词，而是访问者与成员权限不匹配。要明确是谁在访问：本类成员、派生类成员、友元，还是类外普通函数。",
+        code: `A a;
+cout << a.x; // 若 x 为 private/protected，则类外访问错误`,
+        mistake: "只写“x 是私有的”却不指出错误代码位置和访问者身份。",
+        exam: "满分表达：错误在 a.x；main 是类外普通函数，不能访问 private；应通过 public 接口。"
+      },
+      "构造错误": {
+        explain: "构造类错误包括构造函数写返回类型、缺少可用默认构造、派生类未调用基类带参构造，以及 const/引用成员没有使用初始化列表。",
+        code: `class D : public B {
+public:
+    D(int x) : B(x) {} // 显式构造基类部分
+};`,
+        mistake: "只修改派生类自己的成员，却忘记对象创建时必须先完成基类部分。",
+        exam: "改错时先检查函数名、返回类型、参数，再检查初始化列表和基类构造。"
+      },
+      "抽象类错误": {
+        explain: "抽象类错误通常表现为直接创建含纯虚函数的类对象，或派生类没有实现所有纯虚函数却被实例化。抽象类可以定义指针和引用，只是不能直接产生完整对象。",
+        code: `Shape* p = new Circle; // 正确
+// Shape s;             // 错误`,
+        mistake: "误以为抽象类连指针也不能声明，或者把“不能实例化”写成“不能继承”。",
+        exam: "准确原因：类中仍存在未实现的纯虚函数，因此该类是抽象类，不能直接创建对象。"
+      },
+      "模板错误": {
+        explain: "模板错误高频集中在缺少 template 声明、T 未声明、类外成员定义格式错误、类模板实例化缺少类型，以及传入类型不支持模板内部操作。",
+        code: `template<typename T>
+T Box<T>::get() const {
+    return value;
+}`,
+        mistake: "类外定义写 T Box::get()，既缺少模板声明，也缺少 Box<T>。",
+        exam: "改错时逐项检查：模板头、T 的使用、类名<T>::、创建对象时的 <具体类型>。"
+      }
+    };
+
     const defaultState = {
       current: "home",
       profile: {
@@ -3190,6 +3646,42 @@ public:
       }
     }
 
+    function renderConceptCard(lessonId, concept, index) {
+      const known = isConceptKnown(lessonId, index);
+      const detail = conceptDetails[concept[0]] || {
+        explain: concept[1].replace(/<[^>]+>/g, ""),
+        code: "",
+        mistake: "结合本课例题检查概念的适用条件，不要只记结论。",
+        exam: "作答时写出判断依据，并用本课例题验证。"
+      };
+      return `<article class="concept detailed-card ${known ? "known" : ""}" data-concept-card="${index}">
+        <strong>${concept[0]}</strong>
+        <div class="concept-detail">
+          <span>${concept[1]}</span>
+          <div class="concept-explanation"><strong>详细理解</strong>${detail.explain}</div>
+          <details class="concept-more">
+            <summary>展开代码示例、常见错误与考试提示</summary>
+            ${detail.code ? `<pre class="concept-code">${escapeHtml(detail.code)}</pre>` : ""}
+            <div class="concept-sections">
+              <div class="concept-section">
+                <strong>常见错误</strong>
+                <p>${detail.mistake}</p>
+              </div>
+              <div class="concept-section">
+                <strong>考试怎么答</strong>
+                <p>${detail.exam}</p>
+              </div>
+            </div>
+          </details>
+        </div>
+        <span class="known-note">已掌握，此知识点讲解已跳过。</span>
+        <label class="concept-check">
+          <input type="checkbox" data-concept-check="${index}" ${known ? "checked" : ""}>
+          <span>我已掌握，跳过这个知识点</span>
+        </label>
+      </article>`;
+    }
+
     function showLesson(id) {
       const lesson = lessons.find(item => item.id === id);
       if (!lesson) return;
@@ -3228,23 +3720,12 @@ public:
           <div class="section-title">
             <div>
               <h2>第一步：筛选并理解知识点</h2>
-              <p>已会的内容直接勾选跳过；不确定就先保留，学完例题后再判断。</p>
+              <p>每个知识点包含详细解释、代码示例、常见错误和考试提示。已会的内容可以勾选跳过；不确定就先完整学习。</p>
             </div>
             <button class="btn btn-outline" id="skipLessonBtn">${allKnown ? "取消整课跳过" : "本课全部已掌握"}</button>
           </div>
-          <div class="concept-grid">
-            ${lesson.concepts.map((concept, index) => {
-              const known = isConceptKnown(id, index);
-              return `<div class="concept ${known ? "known" : ""}" data-concept-card="${index}">
-                <strong>${concept[0]}</strong>
-                <span class="concept-detail">${concept[1]}</span>
-                <span class="known-note">已掌握，此知识点讲解已跳过。</span>
-                <label class="concept-check">
-                  <input type="checkbox" data-concept-check="${index}" ${known ? "checked" : ""}>
-                  <span>我已掌握，跳过这个知识点</span>
-                </label>
-              </div>`;
-            }).join("")}
+          <div class="concept-grid detailed">
+            ${lesson.concepts.map((concept, index) => renderConceptCard(id, concept, index)).join("")}
           </div>
           <div class="method"><strong>${lesson.method[0]}</strong><p>${lesson.method[1]}</p></div>
         </section>
