@@ -284,7 +284,7 @@
 
     .stats {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 14px;
       margin: 18px 0 30px;
     }
@@ -596,6 +596,26 @@
       gap: 9px;
       margin-top: 12px;
     }
+    .target-path {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .target-path-item {
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #fff;
+    }
+    .target-path-item strong { display: block; margin-bottom: 5px; }
+    .target-path-item span { color: var(--muted); font-size: 14px; }
+    .source-note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .source-note a { color: var(--blue); font-weight: 700; }
 
     .empty {
       padding: 45px 25px;
@@ -609,7 +629,7 @@
 
     .bank-controls {
       display: grid;
-      grid-template-columns: 1.5fr 1fr 1fr;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr;
       gap: 11px;
       margin: 17px 0;
     }
@@ -673,7 +693,7 @@
       main { padding-left: 14px; padding-right: 14px; }
       .topbar { align-items: flex-start; }
       .countdown { display: none; }
-      .stats, .goal-grid, .concept-grid, .rubric-grid, .setup-grid, .bank-controls { grid-template-columns: 1fr; }
+      .stats, .goal-grid, .concept-grid, .rubric-grid, .setup-grid, .bank-controls, .target-path { grid-template-columns: 1fr; }
       .hero-actions, .lesson-actions { flex-direction: column; }
       .btn { width: 100%; }
       .section-title { display: block; }
@@ -753,7 +773,7 @@
   </div>
 
   <script>
-    const lessons = [
+    const lessonAndTargetContent = [
       {
         id: "class-access",
         day: "第一天 · 基础得分区",
@@ -1688,8 +1708,311 @@ Derived(int x) : value(x) {}
 修改方式：
 Derived(int x) : Base(x), value(x) {}`
         }
+      },
+      {
+        id: "tier60-ref-output",
+        track: 60,
+        lessons: ["reading-debug"],
+        category: "读程序写结果",
+        difficulty: "保底",
+        points: 6,
+        examForm: "目标 60 分必做",
+        title: "引用与指针修改同一变量",
+        prompt: "int n=3; int& r=n; int* p=&n; r+=2; *p*=3; 依次输出 n、r、*p。写出结果并说明三个表达式为何相同。",
+        focus: ["引用", "指针解引用", "变量别名", "输出追踪"],
+        outline: ["r 和 n 是同一对象的两个名字。", "r+=2 后 n 变为 5。", "*p*=3 后 n 变为 15。", "最终三个输出都为 15。"],
+        sourceTitle: "Microsoft Learn: References",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/references-cpp?view=msvc-170"
+      },
+      {
+        id: "tier60-private-error",
+        track: 60,
+        lessons: ["class-access", "reading-debug"],
+        category: "指出错误",
+        difficulty: "保底",
+        points: 3,
+        examForm: "目标 60 分必做",
+        title: "main 直接输出 private 成员",
+        prompt: "Student 的 score 为 private，main 中写 cout << s.score。按“错误位置、原因、改法”三项作答。",
+        focus: ["private", "访问控制", "公有成员函数", "规范改错"],
+        outline: ["错误位置是 s.score。", "类外普通代码不能直接访问 private。", "添加 public 的 getScore()。", "通过 s.getScore() 输出。"],
+        sourceTitle: "Microsoft Learn: Member access control",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/member-access-control-cpp?view=msvc-170"
+      },
+      {
+        id: "tier60-meter-class",
+        track: 60,
+        lessons: ["class-access", "constructor"],
+        category: "单类设计",
+        difficulty: "保底",
+        points: 10,
+        examForm: "目标 60 分必做",
+        title: "ElectricMeter 用电费用类",
+        prompt: "设计 ElectricMeter，保存用电量与单价，构造函数初始化，cost() 求费用，display() 输出；main 创建两个对象并输出各自费用。",
+        focus: ["私有成员", "构造函数", "成员函数", "main 测试"],
+        outline: ["成员设 usage 和 price。", "构造函数使用初始化列表。", "cost 返回 usage*price。", "main 至少创建两个对象。"],
+        sourceTitle: "Microsoft Learn: Constructors",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/constructors-cpp?view=msvc-170"
+      },
+      {
+        id: "tier60-point-plus",
+        track: 60,
+        lessons: ["operators"],
+        category: "运算符重载",
+        difficulty: "保底",
+        points: 15,
+        examForm: "目标 60 分必做",
+        title: "Point 二维坐标加法",
+        prompt: "设计 Point 类，重载 + 使两个点坐标分别相加，并重载 << 输出 (x,y)，用 (2,3)+(4,5) 测试。",
+        focus: ["operator+", "operator<<", "const 引用", "返回新对象"],
+        outline: ["operator+ 不修改原对象。", "返回 Point(x+other.x,y+other.y)。", "<< 返回 ostream&。", "测试结果为 (6,8)。"],
+        sourceTitle: "Microsoft Learn: Operator overloading",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/operator-overloading?view=msvc-170"
+      },
+      {
+        id: "tier60-max-template",
+        track: 60,
+        lessons: ["templates"],
+        category: "函数模板",
+        difficulty: "保底",
+        points: 10,
+        examForm: "目标 60 分必做",
+        title: "larger 函数模板",
+        prompt: "编写 larger(T a,T b) 返回较大值，分别使用 int 与 double 测试。",
+        focus: ["template<typename T>", "泛型参数", "条件表达式", "两种实例化"],
+        outline: ["返回类型和形参均使用 T。", "使用 a>b?a:b。", "main 测试整数。", "再测试 double。"],
+        sourceTitle: "Microsoft Learn: Function templates",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/function-templates?view=msvc-170"
+      },
+      {
+        id: "tier70-member-order",
+        track: 70,
+        lessons: ["constructor", "reading-debug"],
+        category: "读程序写结果",
+        difficulty: "稳过",
+        points: 6,
+        examForm: "目标 70 分必做",
+        title: "成员对象与宿主对象的构造顺序",
+        prompt: "Engine 构造输出 E+、析构输出 E-；Car 含 Engine 成员，构造输出 C+、析构输出 C-。main 创建一个 Car，写出四行输出。",
+        focus: ["成员对象", "构造顺序", "析构逆序", "完整输出"],
+        outline: ["成员对象先于宿主构造函数体。", "先输出 E+，再输出 C+。", "析构顺序相反。", "随后为 C-、E-。"],
+        sourceTitle: "Microsoft Learn: Constructors",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/constructors-cpp?view=msvc-170"
+      },
+      {
+        id: "tier70-default-arg",
+        track: 70,
+        lessons: ["reading-debug"],
+        category: "指出错误",
+        difficulty: "稳过",
+        points: 3,
+        examForm: "目标 70 分必做",
+        title: "默认参数没有从右向左连续",
+        prompt: "判断声明 int calc(int a=2,int b); 是否正确，写出原因并修改为可只传一个参数的形式。",
+        focus: ["默认参数", "函数声明", "参数顺序", "修改代码"],
+        outline: ["该声明错误。", "有默认值参数右侧不能再出现无默认值参数。", "可改为 int calc(int a,int b=2)。", "定义处通常不重复默认值。"],
+        sourceTitle: "Microsoft Learn: Default arguments",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/default-arguments?view=msvc-170"
+      },
+      {
+        id: "tier70-static-order",
+        track: 70,
+        lessons: ["class-access", "constructor"],
+        category: "单类设计",
+        difficulty: "稳过",
+        points: 10,
+        examForm: "目标 70 分必做",
+        title: "MealOrder 订单总额统计",
+        prompt: "MealOrder 保存餐品名、单价、数量，静态成员 total 累加所有订单金额；构造、display、getTotal 完整实现并测试三份订单。",
+        focus: ["static 数据成员", "类外定义", "构造累加", "静态成员函数"],
+        outline: ["每个对象保存自身订单数据。", "构造中 total += price*count。", "类外初始化 static 成员。", "用 MealOrder::getTotal() 输出。"],
+        sourceTitle: "Microsoft Learn: Static members",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/static-members-cpp?view=msvc-170"
+      },
+      {
+        id: "tier70-fare-poly",
+        track: 70,
+        lessons: ["polymorphism", "multi-class"],
+        category: "继承多态",
+        difficulty: "稳过",
+        points: 20,
+        examForm: "目标 70 分必做",
+        title: "Taxi 与 Bus 费用多态",
+        prompt: "抽象类 Fare 保存里程并声明纯虚函数 cost；Taxi 费用为 10+2.2×里程，Bus 为 2 元固定价。通过基类引用统一输出费用。",
+        focus: ["抽象基类", "纯虚函数", "派生类覆盖", "动态绑定"],
+        outline: ["Fare 不能直接创建对象。", "cost 声明为纯虚函数。", "两个派生类分别实现公式。", "统一函数接收 const Fare&。"],
+        sourceTitle: "Microsoft Learn: Abstract classes",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/abstract-classes-cpp?view=msvc-170"
+      },
+      {
+        id: "tier70-time-io",
+        track: 70,
+        lessons: ["operators"],
+        category: "运算符重载",
+        difficulty: "稳过",
+        points: 15,
+        examForm: "目标 70 分必做",
+        title: "Time 加法、进位与输出",
+        prompt: "Time 保存小时和分钟，重载 + 完成相加并处理分钟进位，重载 << 输出 X小时Y分钟。",
+        focus: ["进位", "operator+", "友元 operator<<", "返回引用"],
+        outline: ["先统一换算为总分钟。", "通过 /60 和 %60 还原。", "+ 返回新 Time。", "<< 返回输出流引用。"],
+        sourceTitle: "Microsoft Learn: Operator overloading",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/operator-overloading?view=msvc-170"
+      },
+      {
+        id: "tier80-copy-vs-assign",
+        track: 80,
+        lessons: ["constructor", "reading-debug"],
+        category: "读程序写结果",
+        difficulty: "强化",
+        points: 6,
+        examForm: "目标 80 分必做",
+        title: "拷贝构造与赋值输出辨析",
+        prompt: "类 Box 的普通构造输出 C，拷贝构造输出 P，赋值运算输出 A。分析 Box a(2); Box b=a; Box c(5); c=b; 的输出并说明每次调用。",
+        focus: ["拷贝初始化", "赋值", "对象已存在", "析构逆序"],
+        outline: ["a 调用普通构造。", "b 是新对象，调用拷贝构造。", "c 先普通构造。", "c=b 时 c 已存在，调用赋值。"],
+        sourceTitle: "Microsoft Learn: Copy constructors",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/copy-constructors-and-copy-assignment-operators-cpp?view=msvc-170"
+      },
+      {
+        id: "tier80-virtual-signature",
+        track: 80,
+        lessons: ["polymorphism", "reading-debug"],
+        category: "指出错误",
+        difficulty: "强化",
+        points: 3,
+        examForm: "目标 80 分必做",
+        title: "override 暴露虚函数原型不一致",
+        prompt: "Base 定义 virtual double calc(int) const；Derived 写 int calc(int)。指出至少两处不匹配，并给出带 override 的正确声明。",
+        focus: ["返回类型", "const 限定", "override", "虚函数原型"],
+        outline: ["返回类型 int 与 double 不一致。", "派生函数缺少末尾 const。", "加 override 可让编译器检查。", "正确形式为 double calc(int) const override。"],
+        sourceTitle: "Microsoft Learn: Virtual functions",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/virtual-functions?view=msvc-170"
+      },
+      {
+        id: "tier80-buffer-copy",
+        track: 80,
+        lessons: ["constructor", "reading-debug"],
+        category: "动态内存",
+        difficulty: "强化",
+        points: 15,
+        examForm: "目标 80 分必做",
+        title: "Buffer 深拷贝与赋值",
+        prompt: "Buffer 使用 new[] 保存整数数组，完整实现构造、拷贝构造、赋值运算符和析构，并验证修改副本不影响原对象。",
+        focus: ["深拷贝", "delete[]", "自赋值", "返回 *this"],
+        outline: ["拷贝构造重新分配内存并复制元素。", "赋值先检查 this!=&other。", "释放旧内存后再分配。", "析构使用 delete[]。"],
+        sourceTitle: "Microsoft Learn: Copy constructors",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/copy-constructors-and-copy-assignment-operators-cpp?view=msvc-170"
+      },
+      {
+        id: "tier80-matrix-plus",
+        track: 80,
+        lessons: ["operators"],
+        category: "运算符重载",
+        difficulty: "强化",
+        points: 15,
+        examForm: "目标 80 分必做",
+        title: "2×2 Matrix 加法与链式输出",
+        prompt: "Matrix 保存 double[2][2]，重载 + 做逐元素相加，重载 << 按两行输出，并保证 const 对象也可相加与输出。",
+        focus: ["二维数组", "const 成员函数", "const 引用", "链式输出"],
+        outline: ["operator+ 参数使用 const Matrix&。", "成员函数末尾加 const。", "循环计算四个位置。", "<< 接收 const Matrix& 并 return out。"],
+        sourceTitle: "Microsoft Learn: Operator overloading",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/operator-overloading?view=msvc-170"
+      },
+      {
+        id: "tier80-shipping-poly",
+        track: 80,
+        lessons: ["polymorphism", "multi-class"],
+        category: "继承多态",
+        difficulty: "强化",
+        points: 20,
+        examForm: "目标 80 分必做",
+        title: "配送费用抽象体系",
+        prompt: "Delivery 抽象基类保存重量，普通配送按 6+1.5×重量，冷链按 12+2.8×重量；使用基类指针数组输出两种费用。",
+        focus: ["纯虚函数", "虚析构", "初始化列表", "基类指针数组"],
+        outline: ["基类声明 virtual double cost() const=0。", "基类析构声明 virtual。", "派生类覆盖时使用 override。", "通过 Delivery* 数组动态调用。"],
+        sourceTitle: "Microsoft Learn: Virtual functions",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/virtual-functions?view=msvc-170"
+      },
+      {
+        id: "tier90-slicing-output",
+        track: 90,
+        lessons: ["constructor", "polymorphism", "reading-debug"],
+        category: "读程序写结果",
+        difficulty: "冲刺",
+        points: 6,
+        examForm: "目标 90 分必做",
+        title: "对象切片与引用多态对比",
+        prompt: "Base 有虚函数 name，Derived 覆盖。执行 Base a=Derived(); Base& r=derived; 分别调用 a.name() 与 r.name()，判断输出并解释对象切片。",
+        focus: ["对象切片", "值复制", "基类引用", "动态绑定"],
+        outline: ["赋值给 Base 对象时派生部分被切掉。", "a 的动态类型就是 Base。", "r 引用完整 Derived 对象。", "因此两次调用结果不同。"],
+        sourceTitle: "Microsoft Learn: Virtual functions",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/virtual-functions?view=msvc-170"
+      },
+      {
+        id: "tier90-virtual-destructor",
+        track: 90,
+        lessons: ["polymorphism", "reading-debug"],
+        category: "指出错误",
+        difficulty: "冲刺",
+        points: 3,
+        examForm: "目标 90 分必做",
+        title: "通过基类指针删除派生对象",
+        prompt: "Base 析构函数不是 virtual，Base* p=new Derived; delete p。说明风险、错误规则和正确修改。",
+        focus: ["虚析构", "基类指针", "资源释放", "未定义行为"],
+        outline: ["通过基类指针删除派生对象需要虚析构。", "否则派生析构可能不执行。", "资源可能泄漏且行为未定义。", "改为 virtual ~Base()=default。"],
+        sourceTitle: "Microsoft Learn: Virtual functions",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/virtual-functions?view=msvc-170"
+      },
+      {
+        id: "tier90-safe-array",
+        track: 90,
+        lessons: ["constructor", "operators"],
+        category: "动态内存",
+        difficulty: "冲刺",
+        points: 20,
+        examForm: "目标 90 分必做",
+        title: "SafeArray 下标、深拷贝与自赋值",
+        prompt: "实现动态数组类：深拷贝构造、赋值、自赋值保护、析构，并重载 [] 的 const 与非 const 版本；越界时给出合理处理。",
+        focus: ["Rule of Three", "operator[]", "const 重载", "异常或边界处理"],
+        outline: ["资源类至少完整实现三大函数。", "赋值运算安全处理自赋值。", "提供 int& 与 const int& 两个 []。", "越界可抛 out_of_range。"],
+        sourceTitle: "Microsoft Learn: Copy constructors",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/copy-constructors-and-copy-assignment-operators-cpp?view=msvc-170"
+      },
+      {
+        id: "tier90-template-const",
+        track: 90,
+        lessons: ["templates"],
+        category: "函数模板",
+        difficulty: "冲刺",
+        points: 10,
+        examForm: "目标 90 分必做",
+        title: "const 引用版 genericMax",
+        prompt: "编写 template<typename T> const T& genericMax(const T&,const T&)，讨论为何使用 const 引用，并用 string 与自定义可比较类测试。",
+        focus: ["const 引用", "避免复制", "模板约束", "自定义类型"],
+        outline: ["形参使用 const T& 避免大对象复制。", "返回引用时实参生命周期必须足够长。", "T 必须支持 operator<。", "测试 string 和自定义类。"],
+        sourceTitle: "Microsoft Learn: Function templates",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/function-templates?view=msvc-170"
+      },
+      {
+        id: "tier90-payment-system",
+        track: 90,
+        lessons: ["polymorphism", "multi-class", "operators"],
+        category: "继承多态",
+        difficulty: "冲刺",
+        points: 20,
+        examForm: "目标 90 分必做",
+        title: "支付手续费多态与完整测试",
+        prompt: "Payment 抽象基类保存金额；CardPayment 收取 1.2%，WalletPayment 收取 0.6% 且最低 0.5 元。通过基类引用计算手续费，并测试金额 30 与 500。",
+        focus: ["抽象类", "边界条件", "override", "虚析构", "多组测试"],
+        outline: ["fee() 声明为 const 纯虚函数。", "Wallet 使用 max(amount*0.006,0.5)。", "基类提供虚析构。", "两种金额都测试以覆盖最低手续费边界。"],
+        sourceTitle: "Microsoft Learn: Abstract classes",
+        sourceUrl: "https://learn.microsoft.com/en-us/cpp/cpp/abstract-classes-cpp?view=msvc-170"
       }
     ];
+
+    const lessons = lessonAndTargetContent.filter(item => Array.isArray(item.concepts));
+    const targetQuestionBank = lessonAndTargetContent.filter(item => Number(item.track) > 0);
 
     const mockReadQuestions = [
       {
@@ -2283,35 +2606,75 @@ public:
       }
     ];
 
+    exampleBank.push(...targetQuestionBank);
+
     const targetProfiles = {
       60: {
         label: "60 分保底",
-        description: "优先掌握基础语法、单类设计、继承基础、运算符、模板和高频改错。",
+        description: "只抓确定性最高的基础分：简单输出、访问权限、构造基础和三类短编程。",
         lessonIds: ["class-access", "constructor", "inheritance", "operators", "templates", "reading-debug"],
+        answerStandard: "读程序写对最终值和明显顺序；改错必须写出错误位置与一句规则；编程先保证类、构造函数和 main 完整可编译。",
+        requiredQuestions: 5,
+        keyWins: ["基础读程序不空题", "私有访问与默认参数改错", "单类、运算符、模板写出完整骨架"],
+        drills: [
+          { title: "60 分专属：基础读程序 5 题", minutes: 35 },
+          { title: "60 分专属：高频改错 5 题", minutes: 30 },
+          { title: "60 分专属：三道短编程骨架", minutes: 60 }
+        ],
         reviewMinutes: 30,
         mockMinutes: 60
       },
       70: {
         label: "70 分稳过",
-        description: "覆盖全部高频得分区，并加入多态和 20 分多类设计训练。",
+        description: "覆盖完整卷面高频区，除了基础分，还必须拿到多态与 20 分多类设计的主体分。",
         lessonIds: ["class-access", "constructor", "inheritance", "polymorphism", "multi-class", "operators", "templates", "reading-debug"],
+        answerStandard: "读程序必须写全输出顺序；改错按“判断、位置、原因、改法”表达；四类编程至少完成核心类和测试。",
+        requiredQuestions: 8,
+        keyWins: ["构造析构与多态输出", "四类改错规则完整表达", "四道编程题均不留空"],
+        drills: [
+          { title: "70 分专属：构造、继承、多态输出", minutes: 50 },
+          { title: "70 分专属：四大改错规则", minutes: 40 },
+          { title: "70 分专属：四类编程题骨架", minutes: 90 },
+          { title: "70 分专属：真卷结构半套练习", minutes: 70 }
+        ],
         reviewMinutes: 45,
         mockMinutes: 90
       },
       80: {
         label: "80 分强化",
-        description: "完成全部知识模块，减少细节题失分，并完成完整模拟。",
+        description: "完成全部模块，并强化拷贝、深拷贝、重载细节、抽象类和题目变式，减少过程分损失。",
         lessonIds: lessons.map(lesson => lesson.id),
+        answerStandard: "答案要包含关键过程和技术术语；编程题需处理 const、返回值、初始化列表与边界条件，争取每题主体分。",
+        requiredQuestions: 12,
+        keyWins: ["拷贝构造与赋值区分", "重载参数和返回值规范", "抽象基类与动态多态完整实现"],
+        drills: [
+          { title: "80 分专属：拷贝与对象生命周期", minutes: 55 },
+          { title: "80 分专属：重载与模板变式", minutes: 55 },
+          { title: "80 分专属：多态综合编程", minutes: 80 },
+          { title: "80 分专属：改错边界与规范表达", minutes: 45 },
+          { title: "80 分专属：完整模拟卷", minutes: 120 }
+        ],
         reviewMinutes: 60,
         mockMinutes: 120
       },
       90: {
         label: "90 分冲刺",
-        description: "完成全部模块、综合编程、错题复写和二次模拟，追求答案完整性。",
+        description: "在全部模块之上训练陷阱、变式、限时书写与二次订正，目标是答案完整且细节可靠。",
         lessonIds: lessons.map(lesson => lesson.id),
+        answerStandard: "读程序逐行追踪，改错给出精确规则与可编译修改，编程题兼顾 const、虚析构、深拷贝、自赋值和完整测试。",
+        requiredQuestions: 16,
+        keyWins: ["复杂生命周期与多态陷阱", "一题多解和边界条件", "两次限时模拟并复写失分代码"],
+        drills: [
+          { title: "90 分专属：生命周期与动态绑定陷阱", minutes: 70 },
+          { title: "90 分专属：深拷贝与自赋值", minutes: 70 },
+          { title: "90 分专属：编程题高分细节", minutes: 100 },
+          { title: "90 分专属：第一套完整限时卷", minutes: 150 },
+          { title: "90 分专属：错题代码闭卷复写", minutes: 70 },
+          { title: "90 分专属：第二套变式卷", minutes: 100 }
+        ],
         reviewMinutes: 90,
         mockMinutes: 150,
-        secondMockMinutes: 60
+        secondMockMinutes: 90
       }
     };
 
@@ -2523,6 +2886,14 @@ public:
         }));
 
       if (!includeCompleted) {
+        profile.drills.forEach(drill => {
+          tasks.push({
+            type: "drill",
+            title: drill.title,
+            minutes: drill.minutes,
+            target: state.profile.target
+          });
+        });
         tasks.push({ type: "review", title: "错题补练与知识点回忆", minutes: profile.reviewMinutes });
         tasks.push({ type: "mock", title: "限时模拟与订正", minutes: profile.mockMinutes });
         if (profile.secondMockMinutes) {
@@ -2654,6 +3025,8 @@ public:
             <div class="plan-task">
               <strong>${task.type === "lesson"
                 ? `<button class="btn btn-soft" style="padding:5px 9px;text-align:left" data-plan-lesson="${task.id}">${task.title}</button>`
+                : task.type === "drill"
+                  ? `<button class="btn btn-soft" style="padding:5px 9px;text-align:left" data-plan-bank="${task.target}">${task.title}</button>`
                 : task.title}</strong>
               <span>${task.minutes} 分钟</span>
             </div>`).join("") : `
@@ -2671,6 +3044,7 @@ public:
       const profile = getTargetProfile();
       const schedule = buildSchedule(false);
       const nextLesson = getNextLesson();
+      const targetExamples = exampleBank.filter(example => Number(example.track) === Number(state.profile.target));
       document.getElementById("topTitle").textContent = "按你的时间与目标安排复习";
       content.innerHTML = `
         <section class="hero">
@@ -2688,6 +3062,7 @@ public:
           <div class="stat"><strong>${state.profile.target}</strong><span>目标分数</span></div>
           <div class="stat"><strong>${state.profile.days} 天</strong><span>准备时间</span></div>
           <div class="stat"><strong>${state.profile.hoursPerDay} 小时</strong><span>每天可投入</span></div>
+          <div class="stat"><strong>${targetExamples.length} 道</strong><span>目标专属新题</span></div>
           <div class="stat"><strong>${formatMinutes(schedule.totalMinutes)}</strong><span>当前剩余任务</span></div>
         </div>
 
@@ -2723,13 +3098,38 @@ public:
             </div>
           </div>
           <div class="profile-summary">
-            <span class="tag">60 分：基础保底</span>
-            <span class="tag">70 分：高频全覆盖</span>
-            <span class="tag">80 分：全部知识模块</span>
-            <span class="tag">90 分：二次模拟与完整表达</span>
+            <span class="tag">60 分：5 道基础必做 + 3 个专项</span>
+            <span class="tag">70 分：8 道高频必做 + 四类编程</span>
+            <span class="tag">80 分：12 道变式 + 细节规范</span>
+            <span class="tag">90 分：16 道冲刺 + 双模拟复写</span>
           </div>
           <div style="margin-top:16px">
             <button class="btn btn-blue" id="saveProfileBtn">生成我的复习方案</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <span class="eyebrow" style="color:var(--orange)">${profile.label}专属路线</span>
+              <h2>这个目标与其他分数真正不同在哪里</h2>
+              <p><strong>作答标准：</strong>${profile.answerStandard}</p>
+            </div>
+            <button class="btn btn-outline" id="targetBankBtn">打开本目标专项题库</button>
+          </div>
+          <div class="target-path">
+            ${profile.keyWins.map((item, index) => `
+              <div class="target-path-item">
+                <strong>${index + 1}. ${item}</strong>
+                <span>${profile.drills[index]?.title || "结合错题进行闭环训练"}</span>
+              </div>`).join("")}
+            <div class="target-path-item">
+              <strong>必做题数量：至少 ${profile.requiredQuestions} 道</strong>
+              <span>当前新增 ${targetExamples.length} 道专属题，可在完整题库中继续选做其他难度。</span>
+            </div>
+          </div>
+          <div class="example-bank-grid" style="margin-top:16px">
+            ${targetExamples.slice(0, 3).map(renderExampleCard).join("")}
           </div>
         </section>
 
@@ -2776,8 +3176,12 @@ public:
         showHome();
       };
       document.getElementById("homeMockBtn").onclick = showMock;
+      document.getElementById("targetBankBtn").onclick = () => showExampleBank(String(state.profile.target));
       document.querySelectorAll("[data-plan-lesson]").forEach(button => {
         button.onclick = () => showLesson(button.dataset.planLesson);
+      });
+      document.querySelectorAll("[data-plan-bank]").forEach(button => {
+        button.onclick = () => showExampleBank(button.dataset.planBank);
       });
       if (focusSettings || !state.profile.configured) {
         setTimeout(() => document.getElementById("profilePanel").scrollIntoView({ behavior: "smooth", block: "start" }), 0);
@@ -2929,7 +3333,7 @@ public:
       document.getElementById("checkCodeBtn").onclick = () => checkCode(lesson);
       document.getElementById("solutionBtn").onclick = () => document.getElementById("solution").classList.toggle("show");
       const openBankButton = document.getElementById("openBankFromLesson");
-      if (openBankButton) openBankButton.onclick = showExampleBank;
+      if (openBankButton) openBankButton.onclick = () => showExampleBank();
       document.getElementById("resetCodeBtn").onclick = () => {
         editor.value = lesson.practice.starter;
         state.code[id] = editor.value;
@@ -3021,6 +3425,7 @@ public:
         <div class="example-meta">
           <span class="tag">${example.category}</span>
           ${example.examForm ? `<span class="tag">${example.examForm}</span>` : ""}
+          ${example.track ? `<span class="tag">${example.track} 分专属</span>` : ""}
           <span class="tag">${example.difficulty}</span>
           <span class="tag">${example.points} 分</span>
         </div>
@@ -3034,6 +3439,7 @@ public:
           <ol class="steps">
             ${example.outline.map(step => `<li>${step}</li>`).join("")}
           </ol>
+          ${example.sourceUrl ? `<p class="source-note">规则依据：<a href="${example.sourceUrl}" target="_blank" rel="noopener">${example.sourceTitle}</a>。题目为本站原创变式。</p>` : ""}
         </details>
       </article>`;
     }
@@ -3056,7 +3462,7 @@ public:
       </section>`;
     }
 
-    function showExampleBank() {
+    function showExampleBank(initialTarget = "") {
       state.current = "bank";
       saveState();
       sidebar.classList.remove("open");
@@ -3067,9 +3473,9 @@ public:
         <section class="panel">
           <div class="section-title">
             <div>
-              <span class="eyebrow" style="color:var(--blue)">依据新增 DOC 资料整理</span>
+              <span class="eyebrow" style="color:var(--blue)">历年资料 + 官方 C++ 规则整理</span>
               <h2>扩展例题库</h2>
-              <p>题目已按知识点、难度和参考分值整理。这里提供拆题方向与得分点，不承诺与正式考试原题或范围一致。</p>
+              <p>题目已按目标分、知识点、难度和卷面形式整理。新增题目根据 Microsoft Learn 官方 C++ 规则重新设计，不照搬网上原题。</p>
             </div>
             <span class="tag">${exampleBank.length} 道</span>
           </div>
@@ -3083,6 +3489,10 @@ public:
               <option value="">全部难度</option>
               ${difficulties.map(difficulty => `<option value="${difficulty}">${difficulty}</option>`).join("")}
             </select>
+            <select id="bankTarget">
+              <option value="">全部目标</option>
+              ${[60,70,80,90].map(score => `<option value="${score}" ${String(initialTarget) === String(score) ? "selected" : ""}>${score} 分专属题</option>`).join("")}
+            </select>
           </div>
           <div class="example-bank-grid" id="exampleBankGrid"></div>
           <div class="empty hidden" id="bankEmpty">没有匹配的题目，请减少筛选条件。</div>
@@ -3092,25 +3502,28 @@ public:
         const query = document.getElementById("bankSearch").value.trim().toLowerCase();
         const category = document.getElementById("bankCategory").value;
         const difficulty = document.getElementById("bankDifficulty").value;
+        const target = document.getElementById("bankTarget").value;
         const filtered = exampleBank.filter(example => {
           const text = [
             example.title,
             example.prompt,
             example.category,
             example.examForm || "",
+            example.track || "",
             example.difficulty,
             ...example.focus,
             ...example.outline
           ].join(" ").toLowerCase();
           return (!query || text.includes(query)) &&
             (!category || example.category === category) &&
-            (!difficulty || example.difficulty === difficulty);
+            (!difficulty || example.difficulty === difficulty) &&
+            (!target || Number(example.track) === Number(target));
         });
         document.getElementById("exampleBankGrid").innerHTML = filtered.map(renderExampleCard).join("");
         document.getElementById("bankEmpty").classList.toggle("hidden", filtered.length > 0);
       };
 
-      ["bankSearch", "bankCategory", "bankDifficulty"].forEach(id => {
+      ["bankSearch", "bankCategory", "bankDifficulty", "bankTarget"].forEach(id => {
         document.getElementById(id).addEventListener("input", renderFilteredBank);
         document.getElementById(id).addEventListener("change", renderFilteredBank);
       });
@@ -3350,7 +3763,7 @@ public:
     });
 
     document.getElementById("settingsBtn").onclick = () => showHome(true);
-    document.getElementById("bankBtn").onclick = showExampleBank;
+    document.getElementById("bankBtn").onclick = () => showExampleBank();
     document.getElementById("wrongBookBtn").onclick = showWrongBook;
     document.getElementById("mockBtn").onclick = showMock;
     document.getElementById("menuBtn").onclick = () => sidebar.classList.toggle("open");
