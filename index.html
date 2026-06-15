@@ -127,6 +127,8 @@
       color: #fff;
       background: #17213a;
     }
+    .sidebar-close,
+    .sidebar-backdrop { display: none; }
 
     .brand small {
       display: block;
@@ -708,10 +710,11 @@
     .example-card ul { padding-left: 20px; }
 
     @media (max-width: 900px) {
+      body.sidebar-open { overflow: hidden; }
       .app { display: block; }
       .sidebar {
         position: fixed;
-        z-index: 20;
+        z-index: 50;
         left: 0;
         width: min(86vw, 330px);
         transform: translateX(-105%);
@@ -719,6 +722,37 @@
         box-shadow: var(--shadow);
       }
       .sidebar.open { transform: translateX(0); }
+      .sidebar-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        display: inline-grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        border: 1px solid rgba(255,255,255,.22);
+        border-radius: 10px;
+        color: #fff;
+        background: rgba(255,255,255,.10);
+        font-size: 24px;
+        line-height: 1;
+      }
+      .sidebar-close:hover { background: rgba(255,255,255,.18); }
+      .sidebar-backdrop {
+        position: fixed;
+        z-index: 40;
+        inset: 0;
+        display: block;
+        visibility: hidden;
+        opacity: 0;
+        border: 0;
+        background: rgba(10, 17, 33, .56);
+        transition: opacity .25s ease, visibility .25s ease;
+      }
+      .sidebar-backdrop.show {
+        visibility: visible;
+        opacity: 1;
+      }
       .mobile-toggle {
         display: inline-grid;
         place-items: center;
@@ -768,6 +802,7 @@
   </div>
   <div class="app">
     <aside class="sidebar" id="sidebar">
+      <button class="sidebar-close" id="sidebarCloseBtn" type="button" aria-label="关闭课程目录">×</button>
       <div class="brand">
         <small>Object-Oriented C++</small>
         <h1>个性化复习助手</h1>
@@ -796,11 +831,12 @@
         <button type="button" id="resetBtn">清空学习进度</button>
       </div>
     </aside>
+    <button class="sidebar-backdrop" id="sidebarBackdrop" type="button" aria-label="关闭课程目录"></button>
 
     <main>
       <div class="topbar">
         <div style="display:flex;gap:12px;align-items:center">
-          <button class="mobile-toggle" id="menuBtn" aria-label="打开课程目录">☰</button>
+          <button class="mobile-toggle" id="menuBtn" type="button" aria-label="打开课程目录" aria-controls="sidebar" aria-expanded="false">☰</button>
           <div>
             <h2 id="topTitle">从基础开始，一步一步来</h2>
             <span style="color:var(--muted);font-size:13px">每学完一节就做题，不靠“看懂了”的错觉</span>
@@ -3158,6 +3194,25 @@ T Box<T>::get() const {
     let state = createDefaultState();
     const content = document.getElementById("content");
     const sidebar = document.getElementById("sidebar");
+    const menuBtn = document.getElementById("menuBtn");
+    const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
+    const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+
+    function setSidebarOpen(open) {
+      sidebar.classList.toggle("open", open);
+      sidebarBackdrop.classList.toggle("show", open);
+      document.body.classList.toggle("sidebar-open", open);
+      menuBtn.setAttribute("aria-expanded", String(open));
+      menuBtn.setAttribute("aria-label", open ? "关闭课程目录" : "打开课程目录");
+    }
+
+    function closeSidebar() {
+      setSidebarOpen(false);
+    }
+
+    function toggleSidebar() {
+      setSidebarOpen(!sidebar.classList.contains("open"));
+    }
 
     function createDefaultState() {
       return {
@@ -3497,6 +3552,7 @@ T Box<T>::get() const {
     function showHome(focusSettings = false) {
       state.current = "home";
       saveState();
+      closeSidebar();
       const profile = getTargetProfile();
       const schedule = buildSchedule(false);
       const nextLesson = getNextLesson();
@@ -3687,7 +3743,7 @@ T Box<T>::get() const {
       if (!lesson) return;
       state.current = id;
       saveState();
-      sidebar.classList.remove("open");
+      closeSidebar();
       document.getElementById("topTitle").textContent = lesson.title;
       const lessonIndex = lessons.indexOf(lesson);
       const recommendedLessons = getRecommendedLessons();
@@ -3946,7 +4002,7 @@ T Box<T>::get() const {
     function showExampleBank(initialTarget = "") {
       state.current = "bank";
       saveState();
-      sidebar.classList.remove("open");
+      closeSidebar();
       document.getElementById("topTitle").textContent = "扩展例题库";
       const categories = [...new Set(exampleBank.map(example => example.category))];
       const difficulties = [...new Set(exampleBank.map(example => example.difficulty))];
@@ -4015,7 +4071,7 @@ T Box<T>::get() const {
     function showWrongBook() {
       state.current = "wrong";
       saveState();
-      sidebar.classList.remove("open");
+      closeSidebar();
       document.getElementById("topTitle").textContent = "错题补练";
       const wrongQuestions = lessons.flatMap(l => l.quiz).filter(q => state.wrong.includes(q.id));
       content.innerHTML = `
@@ -4066,7 +4122,7 @@ T Box<T>::get() const {
     function showMock() {
       state.current = "mock";
       saveState();
-      sidebar.classList.remove("open");
+      closeSidebar();
       document.getElementById("topTitle").textContent = `${state.profile.target} 分模拟挑战`;
       content.innerHTML = `
         <section class="panel">
@@ -4247,7 +4303,15 @@ T Box<T>::get() const {
     document.getElementById("bankBtn").onclick = () => showExampleBank();
     document.getElementById("wrongBookBtn").onclick = showWrongBook;
     document.getElementById("mockBtn").onclick = showMock;
-    document.getElementById("menuBtn").onclick = () => sidebar.classList.toggle("open");
+    menuBtn.onclick = toggleSidebar;
+    sidebarCloseBtn.onclick = closeSidebar;
+    sidebarBackdrop.onclick = closeSidebar;
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && sidebar.classList.contains("open")) closeSidebar();
+    });
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 900 && sidebar.classList.contains("open")) closeSidebar();
+    });
     document.getElementById("resetBtn").onclick = () => {
       if (confirm("确定清空全部课程、答题和代码练习进度吗？")) {
         state = {
