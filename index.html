@@ -3353,6 +3353,35 @@ T Box<T>::get() const {
         .replaceAll('"', "&quot;");
     }
 
+    function isInvalidPracticeCode(value) {
+      if (typeof value !== "string") return true;
+      const text = value.trim();
+      return !text ||
+        text === "undefined" ||
+        text === "null" ||
+        text === "[object Object]" ||
+        text.includes("[native code]");
+    }
+
+    function getPracticeStarter(lesson) {
+      const starter = lesson?.practice?.starter;
+      if (!isInvalidPracticeCode(starter)) return starter;
+      return `// 本题暂无提示代码，请根据题目要求独立作答。\n// 题目：${lesson?.practice?.prompt || lesson?.practice?.title || ""}`;
+    }
+
+    function getPracticeCode(lessonId, lesson) {
+      const starter = getPracticeStarter(lesson);
+      const saved = state.code[lessonId];
+      if (isInvalidPracticeCode(saved)) {
+        if (saved !== undefined) {
+          delete state.code[lessonId];
+          if (activeStudentId) localStorage.setItem(stateStorageKey(), JSON.stringify(state));
+        }
+        return starter;
+      }
+      return saved;
+    }
+
     function getTargetProfile() {
       return targetProfiles[state.profile.target] || targetProfiles[70];
     }
@@ -3751,7 +3780,8 @@ T Box<T>::get() const {
       const isRecommended = recommendedIndex >= 0;
       const knownCount = lesson.concepts.filter((_, index) => isConceptKnown(id, index)).length;
       const allKnown = isLessonKnown(lesson);
-      const savedCode = state.code[id] || lesson.practice.starter;
+      const savedCode = getPracticeCode(id, lesson);
+      const starterCode = getPracticeStarter(lesson);
 
       content.innerHTML = `
         <section class="panel">
@@ -3872,7 +3902,7 @@ T Box<T>::get() const {
       const openBankButton = document.getElementById("openBankFromLesson");
       if (openBankButton) openBankButton.onclick = () => showExampleBank();
       document.getElementById("resetCodeBtn").onclick = () => {
-        editor.value = lesson.practice.starter;
+        editor.value = starterCode;
         state.code[id] = editor.value;
         saveState();
         document.getElementById("codeResult").classList.remove("show");
